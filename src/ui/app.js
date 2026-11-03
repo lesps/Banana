@@ -9,7 +9,7 @@ import { renderSettings } from './settings.js';
 import { openEditor } from './editor.js';
 import { dayOf, addDays } from '../lib/day.js';
 import { formatHalves, countEntries } from '../lib/units.js';
-import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, backupDue } from '../lib/log.js';
+import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue } from '../lib/log.js';
 import { exportData, backupFilename, parseBackup, mergeBackup, validEntry } from '../lib/backup.js';
 import { sanitizeSettings } from '../lib/settings.js';
 
@@ -44,6 +44,7 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     install: { ...env, canPrompt: false },
   };
   let draft = '';
+  let pop = null; // { day, from }: one-shot, so the next render animates what was just logged
   let deferredPrompt = null;
 
   const today = () => dayOf(now(), state.settings.rolloverHour);
@@ -76,6 +77,7 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
       const fromDraft = label === undefined;
       const entry = createEntry({ halves, label: fromDraft ? draft : label, day: shownDay(), now: now() });
       if (fromDraft) draft = '';
+      pop = { day: entry.day, from: dayTotal(state.entries, entry.day) };
       if (commit(addEntry(state.entries, entry))) {
         toast(`Logged ${formatHalves(entry.halves)}${entry.label ? ` · ${entry.label}` : ''}`, {
           action: 'Undo',
@@ -176,7 +178,8 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     const active = document.activeElement;
     const focusKey = root.contains(active) ? active.dataset.focus : undefined;
     const sel = focusKey && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
-    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, actions };
+    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, pop, actions };
+    pop = null;
     root.replaceChildren(h('main', { class: `view view-${state.view}` }, VIEWS[state.view](ctx)), tabs());
     lastToday = ctx.today;
     if (focusKey) {

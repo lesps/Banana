@@ -78,4 +78,20 @@ describe('History', () => {
     t.$$('.bars .bar').at(-3).click();
     expect(t.heading()).toBe('Sun, Nov 1');
   });
+
+  it('marks empty days so their bars draw no stem', () => {
+    const t = mount();
+    t.quick('1').click();
+    t.tab('history');
+    const bars = t.$$('.bars .bar');
+    expect(bars.at(-1).classList.contains('zero')).toBe(false);
+    expect(bars.at(-2).classList.contains('zero')).toBe(true);
+  });
+
+  it('shows a banana when nothing is logged', () => {
+    const t = mount();
+    t.tab('history');
+    expect(t.$('.empty .empty-banana')).not.toBeNull();
+    expect(t.$('.empty').textContent).toBe('Nothing logged yet.');
+  });
 });

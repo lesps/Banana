@@ -3,17 +3,27 @@ import { formatDay, formatTime, dayOf } from '../lib/day.js';
 import { formatHalves, bananaRow, bananaWord, QUICK_HALVES } from '../lib/units.js';
 import { entriesForDay, recentLabels } from '../lib/log.js';
 
+export const emptyState = (text) =>
+  h('div', { class: 'empty' }, h('span', { class: 'empty-banana', 'aria-hidden': 'true' }), h('p', {}, text));
+
 export function statusText(total, target) {
   const diff = target - total;
   const where = diff > 0 ? `${formatHalves(diff)} left` : diff === 0 ? 'right on target' : `${formatHalves(-diff)} over`;
   return `of ${formatHalves(target)} · ${where}`;
 }
 
-export function renderToday({ state, today, day, draft, setDraft, actions }) {
+export function renderToday({ state, today, day, draft, setDraft, pop, actions }) {
   const { targetHalves: target, rolloverHour } = state.settings;
   const entries = entriesForDay(state.entries, day);
   const total = entries.reduce((n, e) => n + e.halves, 0);
   const row = bananaRow(total, target);
+  // Icons whose fill went up since just before the last log pop in, staggered by --i.
+  const before = pop?.day === day ? pop.from : null;
+  let popped = 0;
+  const icon = (i, { fill, over }) => {
+    const grew = before != null && fill > Math.max(0, Math.min(2, before - 2 * i));
+    return h('span', { class: `b f${fill}${over ? ' over' : ''}${grew ? ' pop' : ''}`, style: grew ? `--i:${popped++}` : null });
+  };
   const recents = recentLabels(state.entries);
   const suggestions = recentLabels(state.entries, 50);
 
@@ -24,10 +34,10 @@ export function renderToday({ state, today, day, draft, setDraft, actions }) {
       h('button', { type: 'button', class: 'next icon-btn', 'aria-label': 'Next day', 'data-focus': 'next', disabled: day >= today, onclick: () => actions.stepDay(1) }, '›')),
 
     h('section', { class: 'total', 'aria-live': 'polite' },
-      h('div', { class: 'big' }, formatHalves(total)),
+      h('div', { class: `big${before != null ? ' bump' : ''}` }, formatHalves(total)),
       h('div', { class: 'unit' }, bananaWord(total)),
       row.icons.length > 0 && h('div', { class: 'row', 'aria-hidden': 'true' },
-        row.icons.map((i) => h('span', { class: `b f${i.fill}${i.over ? ' over' : ''}` })),
+        row.icons.map((ic, i) => icon(i, ic)),
         row.more > 0 && h('span', { class: 'more' }, `+${row.more}`)),
       target != null && h('p', { class: 'status' }, statusText(total, target))),
 
@@ -42,7 +52,8 @@ export function renderToday({ state, today, day, draft, setDraft, actions }) {
       h('div', { class: 'quick', role: 'group', 'aria-label': 'Log an amount' },
         QUICK_HALVES.map((q) => h('button', {
           type: 'button', 'aria-label': `Log ${formatHalves(q)} ${bananaWord(q)}`, onclick: () => actions.log(q),
-        }, formatHalves(q))))),
+        }, formatHalves(q), h('span', { class: 'mini', 'aria-hidden': 'true' },
+          bananaRow(q, null).icons.map(({ fill }) => h('span', { class: `b f${fill}` }))))))),
 
     recents.length > 0 && h('div', { class: 'recents', role: 'group', 'aria-label': 'Log again' },
       recents.map((r) => h('button', { type: 'button', class: 'chip', onclick: () => actions.log(r.halves, r.label) },
@@ -55,6 +66,6 @@ export function renderToday({ state, today, day, draft, setDraft, actions }) {
           h('span', { class: 'time' }, dayOf(e.ts, rolloverHour) === e.day ? formatTime(e.ts) : ''),
           h('span', { class: 'label' }, e.label || 'Food'),
           h('span', { class: 'amount' }, formatHalves(e.halves))))))
-      : h('p', { class: 'empty' }, day === today ? 'Nothing logged yet today.' : 'Nothing logged this day.'),
+      : emptyState(day === today ? 'Nothing logged yet today.' : 'Nothing logged this day.'),
   ];
 }

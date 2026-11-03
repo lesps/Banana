@@ -6,7 +6,7 @@ Log food in bananas. One banana is about 100 calories, so a latte is "1", a burr
 
 ## Features
 
-- **Today**: your total in big numbers and a row of bananas against an optional daily target ("of 20 · 14½ left"). Tap `½ 1 1½ 2 3` to log; type what it was first if you like. Recent foods sit in a row of chips that log again in one tap. Every log can be undone.
+- **Today**: your total in big numbers and a row of bananas against an optional daily target ("of 20 · 14½ left"); anything past the target goes overripe. Tap `½ 1 1½ 2 3` to log; type what it was first if you like. Recent foods sit in a row of chips that log again in one tap. Every log can be undone.
 - **Edit and delete**: tap any entry to change its amount, label or day, or delete it (with Undo).
 - **Past days**: step back with `‹` to see or fill in an earlier day.
 - **Late nights count toward the day before**: a new day starts at 4 a.m. by default (Settings → New day starts at). Each entry's day is fixed when you log it, so changing this later doesn't move anything.

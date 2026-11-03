@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 — 2026-11-03
+
+More bananas.
+
+- Quick-add buttons show their amount as small bananas.
+- Logged bananas pop into the day's row; the total gives a little bump.
+- Bananas past your target go overripe (brown spots), in the row and on History bars; History bars get stems.
+- A faint banana pattern behind the page, and a swaying banana on empty days and an empty history.
+
 ## 1.0.0 — 2026-11-03
 
 First release.

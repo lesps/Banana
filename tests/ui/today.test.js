@@ -120,3 +120,48 @@ describe('Today', () => {
     expect(t.toast().textContent).toMatch(/couldn’t save/i);
   });
 });
+
+describe('Today: bananas', () => {
+  const fills = (els) => [...els].map((b) => b.className.match(/f(\d)/)[1]).join(' ');
+
+  it('quick buttons show their amount as bananas', () => {
+    const t = mount();
+    expect(fills(t.quick('1½').querySelectorAll('.mini .b'))).toBe('2 1');
+    expect(fills(t.quick('3').querySelectorAll('.mini .b'))).toBe('2 2 2');
+    expect(t.quick('½').querySelector('.mini').getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('pops in the bananas that were just logged, once', () => {
+    const t = mount();
+    t.quick('1').click();
+    expect(t.$$('.row .b.pop')).toHaveLength(1);
+    t.quick('1½').click();
+    const popped = t.$$('.row .b.pop');
+    expect(popped.map((b) => t.$$('.row .b').indexOf(b))).toEqual([1, 2]);
+    expect(popped.map((b) => b.style.getPropertyValue('--i'))).toEqual(['0', '1']);
+    expect(t.$('.total .big').classList.contains('bump')).toBe(true);
+    t.app.actions.setView('today');
+    expect(t.$$('.row .b.pop')).toHaveLength(0);
+    expect(t.$('.total .big').classList.contains('bump')).toBe(false);
+  });
+
+  it('pops a half banana finishing into a whole one', () => {
+    const t = mount();
+    t.quick('½').click();
+    t.quick('½').click();
+    expect(t.$$('.row .b.pop').map((b) => b.className)).toEqual(['b f2 pop']);
+  });
+
+  it('doesn’t pop on undo', () => {
+    const t = mount();
+    t.quick('2').click();
+    t.button('Undo', t.toast()).click();
+    expect(t.$$('.row .b.pop')).toHaveLength(0);
+  });
+
+  it('shows a banana on an empty day, hidden from screen readers', () => {
+    const t = mount();
+    expect(t.$('.empty .empty-banana').getAttribute('aria-hidden')).toBe('true');
+    expect(t.$('.empty').textContent).toBe('Nothing logged yet today.');
+  });
+});

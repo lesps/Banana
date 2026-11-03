@@ -1,4 +1,5 @@
 import { h } from './dom.js';
+import { emptyState } from './today.js';
 import { formatDay, weekdayLetter } from '../lib/day.js';
 import { formatHalves, countEntries } from '../lib/units.js';
 import { series, recentAverage, daySummaries } from '../lib/log.js';
@@ -20,7 +21,7 @@ export function renderHistory({ state, today, actions }) {
         target != null && h('div', { class: 'target', style: `bottom:${pct(target, max)}`, 'aria-hidden': 'true' }),
         days.map((d) => h('button', {
           type: 'button',
-          class: `bar${d.day === today ? ' today' : ''}${target != null && d.halves > target ? ' over' : ''}`,
+          class: `bar${d.day === today ? ' today' : ''}${target != null && d.halves > target ? ' over' : ''}${d.halves ? '' : ' zero'}`,
           'aria-label': `${formatDay(d.day, today)}: ${formatHalves(d.halves)}`,
           onclick: () => actions.openDay(d.day),
         }, h('span', { class: 'fill', style: `height:${pct(d.halves, max)}` })))),
@@ -34,7 +35,7 @@ export function renderHistory({ state, today, actions }) {
           h('span', { class: 'date' }, formatDay(s.day, today)),
           h('span', { class: 'count' }, countEntries(s.count)),
           h('span', { class: 'sum' }, formatHalves(s.halves))))))
-      : h('p', { class: 'empty' }, 'Nothing logged yet.'),
+      : emptyState('Nothing logged yet.'),
     summaries.length > shown.length && h('button', { type: 'button', class: 'btn more-days', onclick: actions.showMore }, 'Show more'),
   ];
 }

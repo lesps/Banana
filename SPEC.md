@@ -36,8 +36,8 @@ Bottom tabs: **Today**, **History**, **Settings**. Tapping Today always returns 
 ### Today (the day view)
 
 - Day navigator `‹ Today ›`. `›` is disabled on today. The view always means "today" unless you step back or open a day from History; it follows the rollover while the app is open.
-- Total for the day, large, plus a row of banana icons: with a target, one icon per target banana (filled, half-filled or empty, and extra icons in a distinct "over" tint); without a target, one icon per banana eaten. A line under it says "of 18" / "4½ left" / "1 over".
-- An optional "What was it?" label field, then quick-add buttons `½ 1 1½ 2 3`. Tapping one logs that amount with the label (if any) on the shown day, clears the label and shows a toast `Logged 1½ · Undo`.
+- Total for the day, large, plus a row of banana icons: with a target, one icon per target banana (filled, half-filled or empty, and bananas past the target drawn overripe, deeper yellow with brown spots); without a target, one icon per banana eaten. A line under it says "of 18" / "4½ left" / "1 over". After a log, the bananas it filled pop into the row one after another and the number gives a small bump (once, on the render right after logging; not on Undo; off with reduced motion).
+- An optional "What was it?" label field, then quick-add buttons `½ 1 1½ 2 3`, each showing its amount as small bananas under the number. Tapping one logs that amount with the label (if any) on the shown day, clears the label and shows a toast `Logged 1½ · Undo`.
 - Recent chips, in one horizontally scrolling row: up to 8 distinct recent labels with the amount last used ("Latte · 1½"). One tap logs it again. The label field also suggests up to 50 past labels.
 - The day's entries, oldest first: time (only when the entry was logged on its own day, since a back-filled entry's creation time says nothing about when it was eaten), label (or "Food"), amount. Tapping one opens the editor.
 
@@ -47,7 +47,7 @@ Amount stepper (− / value / +, ½ steps, min ½), label, day (date input, no f
 
 ### History
 
-- Bars for the last 14 days ending today, scaled to the larger of the target and the biggest day, with a dashed target line when a target is set and days over it tinted. Tapping a bar opens that day.
+- Bars for the last 14 days ending today, scaled to the larger of the target and the biggest day, with a dashed target line when a target is set and days over it drawn overripe (spotted). Bars with anything in them carry a little stem. Tapping a bar opens that day.
 - "Average X a day over N logged days" for the 7 days before today (days with no entries are left out, since an empty day usually means nothing was logged, not nothing eaten).
 - Every day that has entries, newest first: date, total, number of entries. 30 at a time with "Show more". Tapping one opens it in the day view.
 
@@ -72,6 +72,10 @@ File name `banana-YYYY-MM-DD.json`. Exports include deleted markers.
 **Merge** (import into existing data): per `id`, keep whichever copy has the newer `updatedAt`; ties keep the local copy. Re-importing the same file changes nothing. Settings merge the same way on their own `updatedAt`, so restoring onto a fresh install takes the file's settings. Invalid entries are skipped and counted; a file with the wrong `format` or an unknown `version` is rejected.
 
 **Replace**: data and settings become exactly the file's.
+
+## Look
+
+Cream and banana yellow, light and dark themes, a faint pattern of scattered bananas behind the page, and the same banana glyph for the progress row, the quick buttons, the Today tab and the empty states (a big, gently swaying banana when a day or the history is empty).
 
 ## Stack
 
