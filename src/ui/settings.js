@@ -4,7 +4,7 @@ import { formatHalves, bananaWord, countEntries, MAX_HALVES } from '../lib/units
 import { MAX_ROLLOVER } from '../lib/settings.js';
 import { mergeBackup, summarize } from '../lib/backup.js';
 
-export const REPO_URL = 'https://github.com/lesps/banana';
+export const REPO_URL = 'https://github.com/lesps/Banana';
 const DEFAULT_TARGET = 40; // 20 bananas ≈ 2,000 kcal
 
 export function lastBackupText(lastExport, today, rolloverHour) {

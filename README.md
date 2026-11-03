@@ -2,7 +2,7 @@
 
 Log food in bananas. One banana is about 100 calories, so a latte is "1", a burrito bowl is "3", and logging takes one tap. Inspired by the iOS app One Banana.
 
-**Use it:** https://lesps.github.io/banana/ — install it to your Home Screen and it works offline.
+**Use it:** https://lesps.github.io/Banana/ — install it to your Home Screen and it works offline.
 
 ## Features
 
