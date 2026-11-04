@@ -10,7 +10,7 @@ Log food in bananas. One banana is about 100 calories, so a latte is "1", a burr
 - **Edit and delete**: tap any entry to change its amount, label or day, or delete it (with Undo). Or swipe: left to delete, right to put the same amount back on your plate ("Again").
 - **Past days**: step back with `‹` to see or fill in an earlier day.
 - **Late nights count toward the day before**: a new day starts at 4 a.m. by default (Settings → New day starts at). Each entry's day is fixed when you log it, so changing this later doesn't move anything.
-- **Look up**: search about 5,200 everyday foods (bagel, burrito, latte, pad thai, Big Mac…) and see each portion in bananas, so you can estimate before you log. Tap a portion to put its bananas on your plate, then adjust before logging; nothing about the food is saved with the entry. Works offline.
+- **Look up**: search about 5,200 everyday foods (bagel, burrito, latte, pad thai, Big Mac…) and see each portion in bananas, so you can estimate before you log. Tap a portion to put its bananas on your plate and its name in "What was it?" (e.g. "Bagel (regular)"), then adjust either before logging. Works offline.
 - **History**: the last 14 days as bars with your target line, the average of the days you logged this past week, and every logged day with its total.
 - **Backup**: Settings → Export backup shares or downloads a JSON file. Import shows what the file contains and what it would change before you merge it or replace everything.
 

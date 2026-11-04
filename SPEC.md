@@ -49,7 +49,7 @@ Amount stepper (− / value / +, ½ steps, min ½), label, day (date input, no f
 
 ### Look up
 
-A reference for estimating. Nothing here creates or changes an entry: tapping a portion only adds its bananas to the plate (no label, no food details) and goes back to the day being shown, where you can adjust the plate before logging.
+A reference for estimating. Nothing here creates or changes an entry. Tapping a portion adds its bananas to the plate, prefills "What was it?" with the food and portion ("Bagel (regular)"; appended after " + " when the field already has text, capped at 200 characters), and goes back to the day being shown, where you can adjust the plate and the label before logging. If the plate is full, a toast says so and the label is left alone.
 
 - A search box. The search survives switching tabs (not reloads).
 - Before typing: a hint ("Search a food to see about how many bananas it is. Tap a portion to put it on your plate.") and example searches (bagel, burrito, latte, pizza, beer, salad) that fill the box.

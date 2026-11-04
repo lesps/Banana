@@ -11,7 +11,7 @@ import { renderSettings } from './settings.js';
 import { openEditor } from './editor.js';
 import { dayOf, addDays } from '../lib/day.js';
 import { formatHalves, countEntries } from '../lib/units.js';
-import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue, cleanLabel } from '../lib/log.js';
+import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue, cleanLabel, MAX_LABEL } from '../lib/log.js';
 import { addToPlate, undoPlate, plateTotal, plateLabel, sanitizePlate } from '../lib/plate.js';
 import { exportData, backupFilename, parseBackup, mergeBackup, validEntry } from '../lib/backup.js';
 import { sanitizeSettings } from '../lib/settings.js';
@@ -121,9 +121,12 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     undoPlate: () => savePlate(undoPlate(state.plate)),
     clearPlate: () => savePlate([]),
 
-    // From Look up: the portion's bananas go on the plate (no label), back on the day being shown.
-    addFromLookup(halves) {
-      actions.addToPlate(halves, '', { view: 'today' });
+    // From Look up: the portion's bananas go on the plate and "Bagel (regular)" goes into the label
+    // field (appended after " + " if there's text already), back on the day being shown.
+    addFromLookup(halves, label) {
+      const before = draft;
+      draft = (draft.trim() ? `${draft.trim()} + ${label}` : label).slice(0, MAX_LABEL);
+      if (!actions.addToPlate(halves, '', { view: 'today' })) draft = before;
     },
 
     logPlate() {

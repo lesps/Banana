@@ -102,10 +102,54 @@ describe('Look up', () => {
     expect(t.$('.tabs button[data-view="today"]').getAttribute('aria-current')).toBe('page');
     expect(t.heading()).toBe('Yesterday');
     expect(t.plate().querySelector('.plate-sum').textContent).toBe('1 + 2½ = 3½');
-    expect(t.$('#label').value).toBe('Breakfast');
+    expect(t.$('#label').value).toBe('Breakfast + Bagel (regular)');
     expect(t.app.state().entries).toEqual([]);
     expect(t.app.state().plate).toEqual([{ halves: 2 }, { halves: 5 }]);
     expect(t.$$('.piece.drop')).toHaveLength(3); // the bagel's 2½ bananas drop onto the plate
+  });
+
+  it('prefills “What was it?” with the food and portion, which you can still edit before logging', async () => {
+    const t = await open();
+    search(t, 'latte');
+    t.$$('.portion-add').find((b) => b.querySelector('.p-label').textContent === 'large').click();
+    expect(t.$('#label').value).toBe('Coffee, Latte (large)');
+    t.tab('lookup');
+    search(t, 'bagel');
+    t.$$('.portion-add')[0].click();
+    expect(t.$('#label').value).toBe('Coffee, Latte (large) + Bagel (mini)');
+    t.type('#label', 'Breakfast');
+    t.plate().querySelector('.log').click();
+    expect(t.entries()).toEqual([['Breakfast', '3']]);
+  });
+
+  it('logs the prefilled label as is', async () => {
+    const t = await open();
+    search(t, 'burrito');
+    t.$$('.portion-add')[0].click();
+    t.plate().querySelector('.log').click();
+    expect(t.entries()).toEqual([['Burrito (small/regular)', '5']]);
+  });
+
+  it('keeps the prefilled label within 200 characters', async () => {
+    const t = await open();
+    t.tab('today');
+    t.type('#label', 'x'.repeat(195));
+    t.tab('lookup');
+    search(t, 'bagel');
+    t.$$('.portion-add')[0].click();
+    expect(t.$('#label').value).toHaveLength(200);
+  });
+
+  it('leaves the label alone when the plate is full', async () => {
+    const t = await open();
+    t.tab('today');
+    for (let i = 0; i < 33; i++) t.quick('3').click();
+    t.tab('lookup');
+    search(t, 'burrito');
+    t.$$('.portion-add')[0].click();
+    expect(t.toast().textContent).toBe('A plate holds up to 100 bananas.');
+    t.tab('today');
+    expect(t.$('#label').value).toBe('');
   });
 
   it('can’t add a portion that rounds to nothing', async () => {

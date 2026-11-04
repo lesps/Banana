@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.0 — 2026-11-04
+
+- Adding a portion from Look up now also prefills "What was it?" with the food and portion, e.g. "Bagel (regular)", added after " + " if you'd already typed something. Edit it or keep it before logging.
+
 ## 1.5.0 — 2026-11-04
 
 - The plate is now a drawn plate: each banana you add lands on it (a cut half for each ½), dropping in with a bounce. Up to 14 are drawn, with a `+N` badge after that. The sum shows the last 3 amounts.

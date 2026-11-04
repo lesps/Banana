@@ -21,7 +21,7 @@ function portion(food, { label, halves, typical }, actions) {
   const row = halves === 0
     ? h('div', { class: 'portion-row' }, parts, h('span', { class: 'p-plus', 'aria-hidden': 'true' }))
     : h('button', {
-      type: 'button', class: 'portion-row portion-add', onclick: () => actions.addFromLookup(halves),
+      type: 'button', class: 'portion-row portion-add', onclick: () => actions.addFromLookup(halves, `${food.name} (${label})`),
       'aria-label': `Add ${formatHalves(halves)} ${bananaWord(halves)} to the plate (${food.name}, ${label})`,
     }, parts, h('span', { class: 'p-plus', 'aria-hidden': 'true' }, '+'));
   return h('li', { class: `portion${typical ? ' typical' : ''}` }, row);
