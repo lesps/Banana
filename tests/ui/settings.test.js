@@ -28,7 +28,7 @@ describe('Settings: target and day start', () => {
 
   it('changes the rollover hour for new entries only', () => {
     const t = mount({ time: at(2026, 11, 3, 1, 30) });
-    t.quick('1').click();
+    t.logNow('1');
     t.tab('settings');
     const select = t.$('#rollover');
     expect([...select.options].map((o) => o.textContent).slice(0, 3)).toEqual(['Midnight', '1 a.m.', '2 a.m.']);
@@ -36,7 +36,7 @@ describe('Settings: target and day start', () => {
     t.change(select, '0');
     t.tab('today');
     expect(t.total()).toBe('0');
-    t.quick('2').click();
+    t.logNow('2');
     expect(t.app.state().entries.map((e) => e.day)).toEqual(['2026-11-02', '2026-11-03']);
   });
 });
@@ -44,7 +44,7 @@ describe('Settings: target and day start', () => {
 describe('Settings: backup', () => {
   it('exports a backup file and records when', async () => {
     const t = mount();
-    t.quick('1').click();
+    t.logNow('1');
     t.tab('settings');
     expect(t.$('.last-backup').textContent).toBe('Last backup: never');
     t.button('Export backup').click();
@@ -75,7 +75,7 @@ describe('Settings: backup', () => {
 
   it('previews an import, then merges it', () => {
     const t = mount();
-    t.quick('1').click();
+    t.logNow('1');
     t.tab('settings');
     t.app.actions.importText(backup([entry('a', '2026-10-01', 2), entry('b', '2026-11-02', 3), { bad: true }]), 'banana-2026-11-02.json');
     const preview = t.$('.import-preview');
@@ -91,7 +91,7 @@ describe('Settings: backup', () => {
 
   it('replace needs a second tap and swaps in the file’s data and settings', () => {
     const t = mount();
-    t.quick('1').click();
+    t.logNow('1');
     t.tab('settings');
     const settings = { targetHalves: 30, rolloverHour: 3, updatedAt: 1 };
     t.app.actions.importText(backup([entry('a', '2026-10-01', 2)], settings), 'f.json');
@@ -133,7 +133,7 @@ describe('Settings: backup', () => {
 
   it('marks the Settings tab when a backup is due', () => {
     const t = mount();
-    t.quick('1').click();
+    t.logNow('1');
     expect(t.$('.tabs button[data-view="settings"] .dot')).toBeNull();
     t.clock.advance(8 * DAY);
     t.tab('today');

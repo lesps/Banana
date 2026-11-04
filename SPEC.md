@@ -27,7 +27,7 @@ Amounts are stored as an integer number of **half-bananas** (`halves`). ½ banan
 
 ### Storage
 
-`localStorage` through a wrapper that never throws (falls back to memory): `banana:entries:v1` (array), `banana:settings:v1`, `banana:lastExport:v1` (ms). If a save fails, a toast says so and asks for an export. The app calls `navigator.storage.persist()` at startup. Ten years at eight entries a day is about 1.5 MB, under the ~5 MB localStorage limit.
+`localStorage` through a wrapper that never throws (falls back to memory): `banana:entries:v1` (array), `banana:settings:v1`, `banana:lastExport:v1` (ms), and `banana:plate:v1` (the plate, a device-only draft that isn't in backups). If a save fails, a toast says so and asks for an export. The app calls `navigator.storage.persist()` at startup. Ten years at eight entries a day is about 1.5 MB, under the ~5 MB localStorage limit.
 
 ## Screens
 
@@ -36,9 +36,10 @@ Bottom tabs: **Today**, **Look up**, **History**, **Settings**. Tapping Today al
 ### Today (the day view)
 
 - Day navigator `‹ Today ›`. `›` is disabled on today. The view always means "today" unless you step back or open a day from History; it follows the rollover while the app is open.
-- Total for the day, large, plus a row of banana icons: with a target, one icon per target banana (whole, cut in half, or an empty outline, and bananas past the target drawn overripe, deeper yellow with brown spots); without a target, one icon per banana eaten. A line under it says "of 18" / "4½ left" / "1 over". After a log, the bananas it filled pop into the row one after another and the number gives a small bump (once, on the render right after logging; not on Undo; off with reduced motion).
-- An optional "What was it?" label field, then quick-add buttons `½ 1 1½ 2 3`, each showing its amount as small bananas under the number. Tapping one logs that amount with the label (if any) on the shown day, clears the label and shows a toast `Logged 1½ · Undo`.
-- Recent chips, in one horizontally scrolling row: up to 8 distinct recent labels with the amount last used ("Latte · 1½"). One tap logs it again. The label field also suggests up to 50 past labels.
+- Total for the day, large, plus a row of banana icons: with a target, one icon per target banana (whole, cut in half, or an empty outline, and bananas past the target drawn overripe, deeper yellow with brown spots); without a target, one icon per banana eaten. A line under it says "of 18" / "4½ left" / "1 over". While something is on the plate, the row adds those bananas in a lighter, wobbling style and the line previews the result ("of 20 · 9½ left after this"). After a log, the bananas it filled pop into the row one after another and the number gives a small bump (once, on the render right after logging; not on Undo; off with reduced motion).
+- An optional "What was it?" label field, then quick-add buttons `½ 1 1½ 2 3`, each showing its amount as small bananas under the number. Tapping one **adds it to the plate**; nothing is logged yet.
+- **The plate**, below the buttons (so they don't move under your finger when it appears), shown while it has anything on it: the sum (`1 + 2 + ½ = 3½`, the last 5 amounts with `…` before them), **↶** (remove the last amount), **✕** (clear) and **Log 3½**. Log writes one entry for the total on the day being shown, labelled with the typed label, or else the chip names on the plate joined with " + " ("Latte + Croissant"), or else nothing. It then clears the plate and the label and shows `Logged 3½ · Undo`. Enter in the label field also logs the plate. A plate holds up to 100 bananas (one entry's maximum); past that a toast says "A plate holds up to 100 bananas." The plate survives tab switches and closing the app.
+- Recent chips, in one horizontally scrolling row: up to 8 distinct recent labels with the amount last used ("Latte · 1½"). One tap adds it to the plate. The label field also suggests up to 50 past labels.
 - The day's entries, oldest first: time (only when the entry was logged on its own day, since a back-filled entry's creation time says nothing about when it was eaten), label (or "Food"), amount. Tapping one opens the editor.
 
 ### Editor (dialog)
@@ -47,11 +48,11 @@ Amount stepper (− / value / +, ½ steps, min ½), label, day (date input, no f
 
 ### Look up
 
-A reference for estimating, separate from the log: nothing here creates or changes an entry.
+A reference for estimating. Nothing here creates or changes an entry: tapping a portion only adds its bananas to the plate (no label, no food details) and goes back to the day being shown, where you can adjust the plate before logging.
 
 - A search box. The search survives switching tabs (not reloads).
-- Before typing: a hint and example searches (bagel, burrito, latte, pizza, beer, salad) that fill the box.
-- Results (up to 30, with "Showing 30 of N. Add a word to narrow it down." when there are more): each food's name and up to 4 portions, each as its label, little bananas (up to 10) and the amount in bananas. FNDDS's typical serving is tagged **typical**. Portions under ¼ banana show `<½`.
+- Before typing: a hint ("Search a food to see about how many bananas it is. Tap a portion to put it on your plate.") and example searches (bagel, burrito, latte, pizza, beer, salad) that fill the box.
+- Results (up to 30, with "Showing 30 of N. Add a word to narrow it down." when there are more): each food's name and up to 4 portions, each as its label, little bananas (up to 10) and the amount in bananas. FNDDS's typical serving is tagged **typical**. Each portion is a button with a **+** ("Add 2½ bananas to the plate (Bagel, regular)"). Portions under ¼ banana show `<½` and can't be added.
 - "No match for “…”. Try a simpler word." when nothing matches.
 - The food list loads the first time the tab opens ("Loading foods…"), from its own precached chunk, so it works offline; if it fails, "Couldn’t load the food list." with **Try again**.
 - A credit line: estimates from USDA FoodData Central (FNDDS 2021–2023), rounded to the nearest ½ banana; restaurant portions often run bigger.

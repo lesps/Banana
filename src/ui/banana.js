@@ -59,9 +59,9 @@ const USES = {
   0: '<use class="ghost" href="#banana"/>',
 };
 
-// fill: 0 empty, 1 half, 2 whole.
-export function banana(fill, { over = false, pop = false, i } = {}) {
-  const el = h('span', { class: `b f${fill}${over ? ' over' : ''}${pop ? ' pop' : ''}`, style: pop ? `--i:${i}` : null });
+// fill: 0 empty, 1 half, 2 whole. pending: on the plate, not logged yet.
+export function banana(fill, { over = false, pending = false, pop = false, i } = {}) {
+  const el = h('span', { class: `b f${fill}${over ? ' over' : ''}${pending ? ' pending' : ''}${pop ? ' pop' : ''}`, style: pop ? `--i:${i}` : null });
   el.innerHTML = `<svg viewBox="0 0 64 64">${USES[fill]}</svg>`;
   return el;
 }

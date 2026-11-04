@@ -33,7 +33,13 @@ export function mount({ time = at(2026, 11, 3, 12), ...opts } = {}) {
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => [...document.querySelectorAll(s)];
   const button = (text, scope = document) => [...scope.querySelectorAll('button')].find((b) => b.textContent.trim() === text);
-  const quick = (label) => $$('.quick button').find((b) => b.textContent.trim() === label);
+  const quick = (label) => $$('.quick button').find((b) => b.firstChild.textContent.trim() === label);
+  const plate = () => $('.plate');
+  // Put amounts on the plate, then log them as one entry.
+  const logNow = (...amounts) => {
+    amounts.forEach((a) => quick(a).click());
+    plate().querySelector('.log').click();
+  };
   const total = () => $('.total .big').textContent;
   const heading = () => $('.daynav h1').textContent;
   const entries = () => $$('.entries .entry').map((e) => [e.querySelector('.label').textContent, e.querySelector('.amount').textContent]);
@@ -50,5 +56,5 @@ export function mount({ time = at(2026, 11, 3, 12), ...opts } = {}) {
   const tab = (view) => $(`.tabs button[data-view="${view}"]`).click();
   const toast = () => $('.toast');
   const tick = () => new Promise((r) => setTimeout(r, 0));
-  return { root, app, clock, saved, loads, $, $$, button, quick, total, heading, entries, type, change, tab, toast, tick };
+  return { root, app, clock, saved, loads, $, $$, button, quick, plate, logNow, total, heading, entries, type, change, tab, toast, tick };
 }

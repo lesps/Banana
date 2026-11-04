@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0 — 2026-11-04
+
+- **The plate**: the quick buttons and recent chips now add bananas to a plate instead of logging right away. The plate shows the sum, previews where it lands against your target (pending bananas in the row, "… left after this"), and **Log** writes it as one entry; ↶ removes the last amount, ✕ clears it. A meal labels itself from its chips when you haven't typed a label. The plate survives closing the app.
+- Look up portions are now tappable: they add their bananas to the plate and take you back to the day you were on, to adjust before logging. Nothing from the food database is saved with the entry.
+
 ## 1.2.0 — 2026-11-04
 
 - **Look up** tab: search about 5,200 foods from USDA FNDDS 2021–2023 and see each portion in bananas (typical serving tagged, little bananas per portion). Reference only; nothing is logged from it. Works offline; the list is its own 70 KB (gzipped) chunk, loaded the first time the tab opens.

@@ -11,12 +11,13 @@ import { renderSettings } from './settings.js';
 import { openEditor } from './editor.js';
 import { dayOf, addDays } from '../lib/day.js';
 import { formatHalves, countEntries } from '../lib/units.js';
-import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue } from '../lib/log.js';
+import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue, cleanLabel } from '../lib/log.js';
+import { addToPlate, undoPlate, plateTotal, plateLabel, sanitizePlate } from '../lib/plate.js';
 import { exportData, backupFilename, parseBackup, mergeBackup, validEntry } from '../lib/backup.js';
 import { sanitizeSettings } from '../lib/settings.js';
 import { prepareFoods } from '../lib/foods.js';
 
-export const KEYS = { entries: 'banana:entries:v1', settings: 'banana:settings:v1', lastExport: 'banana:lastExport:v1' };
+export const KEYS = { entries: 'banana:entries:v1', settings: 'banana:settings:v1', lastExport: 'banana:lastExport:v1', plate: 'banana:plate:v1' };
 export const PAGE = 30;
 
 const ICONS = {
@@ -50,6 +51,7 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     persisted: null,
     install: { ...env, canPrompt: false },
     lookup: { query: '', status: 'idle' }, // idle | loading | ready | error
+    plate: sanitizePlate(storage.get(KEYS.plate, [])), // a device-only draft, never in backups
   };
   let foodIndex = null;
   let destroyed = false;
@@ -70,6 +72,11 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     if (!ok) toast('Couldn’t save on this device. Export a backup now.', { duration: 10_000 });
     set({ entries });
     return ok;
+  }
+
+  function savePlate(plate) {
+    storage.set(KEYS.plate, plate);
+    set({ plate });
   }
 
   function commitSettings(patch) {
@@ -100,10 +107,35 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     openDay: (day) => set({ view: 'today', day: day && day < today() ? day : null }),
     stepDay: (n) => actions.openDay(addDays(shownDay(), n)),
 
-    log(halves, label) {
-      const fromDraft = label === undefined;
-      const entry = createEntry({ halves, label: fromDraft ? draft : label, day: shownDay(), now: now() });
-      if (fromDraft) draft = '';
+    addToPlate(halves, label) {
+      const plate = addToPlate(state.plate, halves, label);
+      if (!plate) {
+        toast('A plate holds up to 100 bananas.');
+        return false;
+      }
+      savePlate(plate);
+      return true;
+    },
+    undoPlate: () => savePlate(undoPlate(state.plate)),
+    clearPlate: () => savePlate([]),
+
+    // From Look up: the portion's bananas go on the plate (no label), back on the day being shown.
+    addFromLookup(halves) {
+      if (actions.addToPlate(halves)) set({ view: 'today' });
+    },
+
+    logPlate() {
+      const total = plateTotal(state.plate);
+      if (!total) return;
+      const label = cleanLabel(draft) || plateLabel(state.plate);
+      draft = '';
+      storage.set(KEYS.plate, []);
+      state = { ...state, plate: [] };
+      actions.log(total, label);
+    },
+
+    log(halves, label = '') {
+      const entry = createEntry({ halves, label, day: shownDay(), now: now() });
       pop = { day: entry.day, from: dayTotal(state.entries, entry.day) };
       if (commit(addEntry(state.entries, entry))) {
         toast(`Logged ${formatHalves(entry.halves)}${entry.label ? ` · ${entry.label}` : ''}`, {

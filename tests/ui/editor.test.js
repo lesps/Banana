@@ -5,7 +5,7 @@ import { mount } from './helpers.js';
 const setup = () => {
   const t = mount();
   t.type('#label', 'Toast');
-  t.quick('1').click();
+  t.logNow('1');
   t.$('.entries .entry').click();
   return { ...t, dlg: t.$('dialog.editor') };
 };

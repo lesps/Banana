@@ -4,7 +4,7 @@ import { mount, at } from './helpers.js';
 
 const logOn = (t, steps, label) => {
   for (let i = 0; i < steps; i++) t.$('.daynav .prev').click();
-  t.quick(label).click();
+  t.logNow(label);
   t.tab('today');
 };
 
@@ -81,7 +81,7 @@ describe('History', () => {
 
   it('marks empty days so their bars draw no stem', () => {
     const t = mount();
-    t.quick('1').click();
+    t.logNow('1');
     t.tab('history');
     const bars = t.$$('.bars .bar');
     expect(bars.at(-1).classList.contains('zero')).toBe(false);

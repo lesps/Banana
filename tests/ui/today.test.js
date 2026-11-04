@@ -11,28 +11,13 @@ describe('Today', () => {
     expect(t.$('.daynav .next').disabled).toBe(true);
   });
 
-  it('logs a quick amount with one tap and offers undo', () => {
-    const t = mount();
-    t.quick('1½').click();
-    expect(t.total()).toBe('1½');
-    expect(t.entries()).toEqual([['Food', '1½']]);
-    expect(t.toast().textContent).toMatch(/Logged 1½/);
-    t.button('Undo', t.toast()).click();
-    expect(t.total()).toBe('0');
-    expect(t.entries()).toEqual([]);
-  });
-
   it('uses the optional label, clears it, and offers it as a recent chip', () => {
     const t = mount();
     t.type('#label', '  Latte ');
-    t.quick('1').click();
+    t.logNow('1');
     expect(t.entries()).toEqual([['Latte', '1']]);
     expect(t.$('#label').value).toBe('');
-    const chip = t.$('.recents button');
-    expect(chip.textContent).toBe('Latte · 1');
-    chip.click();
-    expect(t.entries()).toEqual([['Latte', '1'], ['Latte', '1']]);
-    expect(t.total()).toBe('2');
+    expect(t.$('.recents button').textContent).toBe('Latte · 1');
   });
 
   it('keeps the label being typed across re-renders', () => {
@@ -46,25 +31,25 @@ describe('Today', () => {
     const t = mount();
     const nasty = '<img src=x onerror=alert(1)>';
     t.type('#label', nasty);
-    t.quick('1').click();
+    t.logNow('1');
     expect(t.$('.entries img')).toBeNull();
     expect(t.entries()[0][0]).toBe(nasty);
   });
 
   it('counts the small hours toward the previous day', () => {
     const t = mount({ time: at(2026, 11, 3, 1, 30) });
-    t.quick('1').click();
+    t.logNow('1');
     expect(t.app.state().entries[0].day).toBe('2026-11-02');
     expect(t.heading()).toBe('Today');
   });
 
   it('steps back to earlier days and logs there', () => {
     const t = mount();
-    t.quick('2').click();
+    t.logNow('2');
     t.$('.daynav .prev').click();
     expect(t.heading()).toBe('Yesterday');
     expect(t.total()).toBe('0');
-    t.quick('3').click();
+    t.logNow('3');
     expect(t.app.state().entries[1].day).toBe('2026-11-02');
     t.$('.daynav .prev').click();
     expect(t.heading()).toBe('Sun, Nov 1');
@@ -76,7 +61,7 @@ describe('Today', () => {
 
   it('follows the day rollover while open', () => {
     const t = mount({ time: at(2026, 11, 3, 23) });
-    t.quick('2').click();
+    t.logNow('2');
     t.clock.set(at(2026, 11, 4, 5));
     document.dispatchEvent(new Event('visibilitychange'));
     expect(t.heading()).toBe('Today');
@@ -86,11 +71,10 @@ describe('Today', () => {
   it('shows banana icons and progress against a target', () => {
     const t = mount();
     t.app.actions.setTarget(8);
-    t.quick('1½').click();
+    t.logNow('1½');
     expect(t.$$('.row .b')).toHaveLength(4);
     expect(t.$('.status').textContent).toBe('of 4 · 2½ left');
-    t.quick('3').click();
-    t.quick('1').click();
+    t.logNow('3', '1');
     expect(t.$('.status').textContent).toBe('of 4 · 1½ over');
     expect(t.$$('.row .b')).toHaveLength(6);
     expect(t.$$('.row .b.over')).toHaveLength(2);
@@ -98,9 +82,9 @@ describe('Today', () => {
 
   it('says "banana" for one or less', () => {
     const t = mount();
-    t.quick('1').click();
+    t.logNow('1');
     expect(t.$('.total .unit').textContent).toBe('banana');
-    t.quick('½').click();
+    t.logNow('½');
     expect(t.$('.total .unit').textContent).toBe('bananas');
   });
 
@@ -108,7 +92,7 @@ describe('Today', () => {
     const storage = memoryStorage();
     const t = mount({ storage });
     t.type('#label', 'Toast');
-    t.quick('2').click();
+    t.logNow('2');
     const t2 = mount({ storage });
     expect(t2.entries()).toEqual([['Toast', '2']]);
   });
@@ -116,7 +100,7 @@ describe('Today', () => {
   it('warns when saving fails', () => {
     const storage = { get: (_k, fb) => fb, set: () => false, remove: () => {} };
     const t = mount({ storage });
-    t.quick('1').click();
+    t.logNow('1');
     expect(t.toast().textContent).toMatch(/couldn’t save/i);
   });
 });
@@ -133,9 +117,9 @@ describe('Today: bananas', () => {
 
   it('pops in the bananas that were just logged, once', () => {
     const t = mount();
-    t.quick('1').click();
+    t.logNow('1');
     expect(t.$$('.row .b.pop')).toHaveLength(1);
-    t.quick('1½').click();
+    t.logNow('1½');
     const popped = t.$$('.row .b.pop');
     expect(popped.map((b) => t.$$('.row .b').indexOf(b))).toEqual([1, 2]);
     expect(popped.map((b) => b.style.getPropertyValue('--i'))).toEqual(['0', '1']);
@@ -147,14 +131,21 @@ describe('Today: bananas', () => {
 
   it('pops a half banana finishing into a whole one', () => {
     const t = mount();
-    t.quick('½').click();
-    t.quick('½').click();
+    t.logNow('½');
+    t.logNow('½');
     expect(t.$$('.row .b.pop').map((b) => b.className)).toEqual(['b f2 pop']);
+  });
+
+  it('doesn’t pop when amounts only go on the plate', () => {
+    const t = mount();
+    t.quick('2').click();
+    expect(t.$$('.row .b.pop')).toHaveLength(0);
+    expect(t.$('.total .big').classList.contains('bump')).toBe(false);
   });
 
   it('doesn’t pop on undo', () => {
     const t = mount();
-    t.quick('2').click();
+    t.logNow('2');
     t.button('Undo', t.toast()).click();
     expect(t.$$('.row .b.pop')).toHaveLength(0);
   });
@@ -169,7 +160,7 @@ describe('Today: bananas', () => {
   it('draws whole, cut-in-half and empty bananas from one shared sprite', () => {
     const t = mount();
     t.app.actions.setTarget(6);
-    t.quick('1½').click();
+    t.logNow('1½');
     const uses = (b) => [...b.querySelectorAll('use')].map((u) => `${u.getAttribute('href')}${u.classList.contains('ghost') ? ' ghost' : ''}`);
     const [whole, half, empty] = t.$$('.row .b');
     expect(uses(whole)).toEqual(['#banana']);
@@ -179,5 +170,124 @@ describe('Today: bananas', () => {
     mount();
     expect(document.querySelectorAll('#banana-sprite')).toHaveLength(1);
     for (const id of ['banana', 'banana-half', 'banana-face']) expect(document.getElementById(id).tagName).toBe('symbol');
+  });
+});
+
+describe('Today: the plate', () => {
+  const sum = (t) => t.plate().querySelector('.plate-sum').textContent;
+  const logBtn = (t) => t.plate().querySelector('.log');
+
+  it('adds up tapped amounts without logging them', () => {
+    const t = mount();
+    expect(t.plate()).toBeNull();
+    t.quick('1').click();
+    t.quick('2').click();
+    t.quick('½').click();
+    expect(sum(t)).toBe('1 + 2 + ½ = 3½');
+    expect(logBtn(t).textContent).toBe('Log 3½');
+    expect(t.total()).toBe('0');
+    expect(t.app.state().entries).toEqual([]);
+    expect(t.quick('1½').getAttribute('aria-label')).toBe('Add 1½ bananas');
+  });
+
+  it('logs one entry for the total, clears the plate and label, and offers undo', () => {
+    const t = mount();
+    t.type('#label', 'Dinner');
+    t.quick('2').click();
+    t.quick('3').click();
+    logBtn(t).click();
+    expect(t.entries()).toEqual([['Dinner', '5']]);
+    expect(t.plate()).toBeNull();
+    expect(t.$('#label').value).toBe('');
+    expect(t.toast().textContent).toMatch(/Logged 5 · Dinner/);
+    t.button('Undo', t.toast()).click();
+    expect(t.entries()).toEqual([]);
+  });
+
+  it('logs with Enter in the label field', () => {
+    const t = mount();
+    t.quick('1').click();
+    t.type('#label', 'Snack');
+    t.$('form.logger').dispatchEvent(new Event('submit', { cancelable: true }));
+    expect(t.entries()).toEqual([['Snack', '1']]);
+  });
+
+  it('removes the last amount, or clears the plate', () => {
+    const t = mount();
+    t.quick('1').click();
+    t.quick('2').click();
+    t.plate().querySelector('[aria-label="Remove last"]').click();
+    expect(sum(t)).toBe('1');
+    t.quick('3').click();
+    t.plate().querySelector('[aria-label="Clear plate"]').click();
+    expect(t.plate()).toBeNull();
+    expect(t.app.state().entries).toEqual([]);
+  });
+
+  it('puts recent chips on the plate and names the meal after them', () => {
+    const t = mount();
+    t.type('#label', 'Croissant');
+    t.logNow('1½');
+    t.type('#label', 'Latte');
+    t.logNow('1');
+    const chip = (name) => t.$$('.recents button').find((b) => b.textContent.startsWith(name));
+    chip('Latte').click();
+    chip('Croissant').click();
+    expect(sum(t)).toBe('1 + 1½ = 2½');
+    logBtn(t).click();
+    expect(t.entries().at(-1)).toEqual(['Latte + Croissant', '2½']);
+  });
+
+  it('prefers a typed label over the chip names', () => {
+    const t = mount();
+    t.type('#label', 'Latte');
+    t.logNow('1');
+    t.$('.recents button').click();
+    t.type('#label', 'Breakfast');
+    logBtn(t).click();
+    expect(t.entries().at(-1)).toEqual(['Breakfast', '1']);
+  });
+
+  it('previews where the plate lands against the target', () => {
+    const t = mount();
+    t.app.actions.setTarget(8);
+    t.logNow('1');
+    t.quick('2').click();
+    expect(t.$('.status').textContent).toBe('of 4 · 1 left after this');
+    expect(t.$$('.row .b.pending')).toHaveLength(2);
+    expect(t.$$('.row .b:not(.pending)')).toHaveLength(2);
+    t.quick('3').click();
+    expect(t.$('.status').textContent).toBe('of 4 · 2 over after this');
+  });
+
+  it('shows pending bananas without a target too', () => {
+    const t = mount();
+    t.quick('1½').click();
+    expect(t.$$('.row .b.pending').map((b) => b.className)).toEqual(['b f2 pending', 'b f1 pending']);
+  });
+
+  it('logs to the day showing when you tap Log', () => {
+    const t = mount();
+    t.quick('2').click();
+    t.$('.daynav .prev').click();
+    expect(sum(t)).toBe('2');
+    logBtn(t).click();
+    expect(t.app.state().entries[0].day).toBe('2026-11-02');
+  });
+
+  it('holds up to 100 bananas', () => {
+    const t = mount();
+    for (let i = 0; i < 34; i++) t.quick('3').click();
+    expect(logBtn(t).textContent).toBe('Log 99');
+    expect(t.toast().textContent).toBe('A plate holds up to 100 bananas.');
+  });
+
+  it('survives closing the app', () => {
+    const storage = memoryStorage();
+    const t = mount({ storage });
+    t.quick('2').click();
+    t.quick('½').click();
+    const t2 = mount({ storage });
+    expect(sum(t2)).toBe('2 + ½ = 2½');
   });
 });

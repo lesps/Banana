@@ -76,7 +76,7 @@ describe('Look up', () => {
 
   it('offers example searches before you type', async () => {
     const t = await open();
-    expect(t.$('.lookup-hint').textContent).toMatch(/about how many bananas/);
+    expect(t.$('.lookup-hint').textContent).toBe('Search a food to see about how many bananas it is. Tap a portion to put it on your plate.');
     t.$$('.examples button').find((b) => b.textContent === 'burrito').click();
     expect(t.$('#lookup').value).toBe('burrito');
     expect(results(t)[0][0]).toBe('Burrito');
@@ -88,11 +88,29 @@ describe('Look up', () => {
     expect(t.$('.no-results').textContent).toBe('No match for “zzz”. Try a simpler word.');
   });
 
-  it('is reference only: nothing in the results logs anything', async () => {
-    const t = await open();
+  it('tapping a portion puts its bananas on the plate and goes back to the day, logging nothing', async () => {
+    const t = mount();
+    t.type('#label', 'Breakfast');
+    t.quick('1').click();
+    t.$('.daynav .prev').click();
+    t.tab('lookup');
+    await t.tick();
     search(t, 'bagel');
-    expect(t.$$('.foods button')).toHaveLength(0);
+    const regular = t.$$('.portion-add').find((b) => b.querySelector('.p-label').textContent === 'regular');
+    expect(regular.getAttribute('aria-label')).toBe('Add 2½ bananas to the plate (Bagel, regular)');
+    regular.click();
+    expect(t.$('.tabs button[data-view="today"]').getAttribute('aria-current')).toBe('page');
+    expect(t.heading()).toBe('Yesterday');
+    expect(t.plate().querySelector('.plate-sum').textContent).toBe('1 + 2½ = 3½');
+    expect(t.$('#label').value).toBe('Breakfast');
     expect(t.app.state().entries).toEqual([]);
+    expect(t.app.state().plate).toEqual([{ halves: 2 }, { halves: 5 }]);
+  });
+
+  it('can’t add a portion that rounds to nothing', async () => {
+    const t = await open();
+    search(t, 'coffee brewed');
+    expect(t.$$('.portion-add')).toHaveLength(0);
   });
 
   it('renders food names as text', async () => {
