@@ -2,6 +2,10 @@
 
 Each release's bullets are shown in the app's "What's new" note, so they're written for the person using Banana. Notes for developers go under a "### Developer" heading, which the app skips.
 
+## 1.7.1 — 2026-11-04
+
+- The What's new note has a ✕ in its top corner, so you can close it without scrolling to the bottom.
+
 ## 1.7.0 — 2026-11-04
 
 - A note like this one now pops up after each update, saying what's new. You can reopen it any time from Settings → What's new.

@@ -66,6 +66,19 @@ describe('What’s new', () => {
     expect(dialog().querySelector('details.earlier')).toBeNull();
   });
 
+  it('can be closed from the top without scrolling', () => {
+    const storage = storageWith('1.5.0');
+    mount({ storage, version: '1.6.0', changelog });
+    const close = dialog().querySelector('.whats-new-close');
+    expect(close.getAttribute('aria-label')).toBe('Close');
+    expect(close.compareDocumentPosition(dialog().querySelector('h2')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(dialog().querySelector('h2').hasAttribute('autofocus')).toBe(true);
+    close.click();
+    expect(dialog()).toBeNull();
+    mount({ storage, version: '1.6.0', changelog });
+    expect(dialog()).toBeNull();
+  });
+
   it('opens at the top: focus goes to the heading, not the button at the bottom', () => {
     mount({ storage: storageWith(null, true), version: '1.6.0', changelog });
     const h2 = dialog().querySelector('h2');

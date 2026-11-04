@@ -391,6 +391,12 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
 
 /* What's new, after an update or from Settings. */
 dialog.whats-new { max-height: min(80vh, 640px); overflow-y: auto; padding: 18px 20px 20px; }
+.whats-new-top { position: sticky; top: -8px; z-index: 1; height: 0; display: flex; justify-content: flex-end; }
+.whats-new-close {
+  width: 36px; height: 36px; margin: -8px -10px 0 0; border: 0; border-radius: 50%;
+  background: var(--line); color: var(--ink); font-size: 16px; line-height: 1;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.14);
+}
 .whats-new-banana {
   display: block; width: 64px; height: 64px; margin: 0 auto 4px;
   transform-origin: 30% 15%; animation: sway 3.2s ease-in-out infinite alternate;

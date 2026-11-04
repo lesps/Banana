@@ -1,4 +1,4 @@
-import { h, openDialog } from './dom.js';
+import { h, openDialog, closeDialog } from './dom.js';
 import { bigBanana } from './banana.js';
 
 function release(r, withHeading) {
@@ -13,6 +13,9 @@ function release(r, withHeading) {
 export function showWhatsNew({ title, releases, earlier = [] }) {
   document.querySelector('dialog.whats-new')?.remove();
   const dlg = h('dialog', { class: 'whats-new', 'aria-labelledby': 'whats-new-title' },
+    // Pinned to the top corner while scrolling, so a long note closes in one tap.
+    h('div', { class: 'whats-new-top' },
+      h('button', { type: 'button', class: 'whats-new-close', 'aria-label': 'Close', onclick: () => closeDialog(dlg) }, '✕')),
     bigBanana('whats-new-banana'),
     // Focus the heading so a long note opens at the top, not scrolled down to "Got it".
     h('h2', { id: 'whats-new-title', tabindex: '-1', autofocus: true }, title),
