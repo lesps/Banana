@@ -100,6 +100,9 @@ export function renderSettings(ctx) {
       state.persisted === false && h('p', { class: 'storage-note' },
         'This browser may clear stored data when space runs low. Installing the app and keeping a backup protects your log.')),
 
+    h('p', { class: 'version-line' },
+      h('span', { class: 'version' }, `Version ${state.version}`), ' · ',
+      h('button', { type: 'button', class: 'link', onclick: actions.showWhatsNew }, 'What’s new')),
     h('p', { class: 'about' }, 'Inspired by One Banana. Food estimates: USDA FoodData Central (FNDDS 2021–2023), public domain. ',
       h('a', { href: REPO_URL, target: '_blank', rel: 'noopener' }, 'Source on GitHub')),
   ];

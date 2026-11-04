@@ -27,7 +27,7 @@ Amounts are stored as an integer number of **half-bananas** (`halves`). ½ banan
 
 ### Storage
 
-`localStorage` through a wrapper that never throws (falls back to memory): `banana:entries:v1` (array), `banana:settings:v1`, `banana:lastExport:v1` (ms), and `banana:plate:v1` (the plate, a device-only draft that isn't in backups). If a save fails, a toast says so and asks for an export. The app calls `navigator.storage.persist()` at startup. Ten years at eight entries a day is about 1.5 MB, under the ~5 MB localStorage limit.
+`localStorage` through a wrapper that never throws (falls back to memory): `banana:entries:v1` (array), `banana:settings:v1`, `banana:lastExport:v1` (ms), and `banana:plate:v1` (the plate, a device-only draft that isn't in backups), and `banana:seenVersion:v1` (the last app version this device has seen). If a save fails, a toast says so and asks for an export. The app calls `navigator.storage.persist()` at startup. Ten years at eight entries a day is about 1.5 MB, under the ~5 MB localStorage limit.
 
 ## Screens
 
@@ -74,7 +74,15 @@ Search: every query word must match the start of a word in the name (any order; 
 - Storage note when `persist()` was not granted: the browser may clear data, so install the app and keep backups.
 - Install button (with iPhone/iPad instructions), or a hint to use the browser menu when the browser offers no install prompt; "Installed" when running standalone.
 
+- At the bottom: "Version 1.7.0 · What's new". **What's new** opens the note for the running version, with every earlier release folded under "Earlier updates".
+
 A dot on the Settings tab means a backup is due: there are changes since the last export, and the last export (or the first entry, if never exported) was 7 or more days ago.
+
+## What's new
+
+After the app updates itself (the service worker auto-updates and the page reloads), it shows a note once: the smiling banana, "Updated to 1.7.0", and the bullets for every release since the version this device last saw, newest first (a heading per release when there's more than one), with the older history folded under "Earlier updates". The note opens at the top (focus goes to its heading) and **Got it** closes it. Someone who already has a log but no version on record (they used the app before versions were tracked) gets a catch-up with every release so far. A fresh install, a rollback, or a version with no notes shows nothing. Either way the running version is recorded.
+
+The text comes from `CHANGELOG.md`, bundled at build time: each `## x.y.z — date` heading, an optional intro line and its `- ` bullets, with Markdown emphasis, code and links reduced to plain text and anything under a `###` subheading (e.g. "### Developer") skipped.
 
 ## Backup format
 

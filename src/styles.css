@@ -388,6 +388,26 @@ dialog::backdrop { background: rgb(0 0 0 / 0.35); }
 .actions { display: flex; align-items: center; gap: 8px; margin-top: 20px; }
 .spacer { flex: 1; }
 .ios-help ol { padding-left: 20px; }
+
+/* What's new, after an update or from Settings. */
+dialog.whats-new { max-height: min(80vh, 640px); overflow-y: auto; padding: 18px 20px 20px; }
+.whats-new-banana {
+  display: block; width: 64px; height: 64px; margin: 0 auto 4px;
+  transform-origin: 30% 15%; animation: sway 3.2s ease-in-out infinite alternate;
+}
+.whats-new-banana svg { width: 100%; height: 100%; overflow: visible; }
+.whats-new h2 { text-align: center; font-size: 20px; margin-bottom: 8px; }
+.whats-new h2:focus { outline: none; }
+.whats-new h3 { font-size: 15px; color: var(--muted); margin: 14px 0 2px; }
+.whats-new .intro { margin: 6px 0 0; font-weight: 600; }
+.whats-new ul { margin: 6px 0 0; padding-left: 20px; }
+.whats-new li { margin: 6px 0; }
+.whats-new details { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 10px; }
+.whats-new summary { cursor: pointer; font-weight: 600; color: var(--muted); }
+.whats-new form { margin-top: 18px; }
+.whats-new form .btn { width: 100%; }
+.version-line { text-align: center; color: var(--muted); font-size: 14px; margin: 28px 0 -18px; }
+.link { border: 0; padding: 0; background: none; color: inherit; font: inherit; text-decoration: underline; }
 .ios-help li { margin: 6px 0; }
 
 @media (prefers-reduced-motion: reduce) {

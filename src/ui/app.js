@@ -16,8 +16,11 @@ import { addToPlate, undoPlate, plateTotal, plateLabel, sanitizePlate } from '..
 import { exportData, backupFilename, parseBackup, mergeBackup, validEntry } from '../lib/backup.js';
 import { sanitizeSettings } from '../lib/settings.js';
 import { prepareFoods } from '../lib/foods.js';
+import { parseChangelog, compareVersions, notesSince, releasesUpTo } from '../lib/changelog.js';
+import { showWhatsNew } from './whats-new.js';
+import { VERSION, CHANGELOG } from '../version.js';
 
-export const KEYS = { entries: 'banana:entries:v1', settings: 'banana:settings:v1', lastExport: 'banana:lastExport:v1', plate: 'banana:plate:v1' };
+export const KEYS = { entries: 'banana:entries:v1', settings: 'banana:settings:v1', lastExport: 'banana:lastExport:v1', plate: 'banana:plate:v1', seenVersion: 'banana:seenVersion:v1' };
 export const PAGE = 30;
 
 const ICONS = {
@@ -35,7 +38,10 @@ export function mergeMessage({ added, updated, removed }) {
   return parts.length ? `Merged: ${parts.join(', ')}.` : 'Nothing new in that file.';
 }
 
-export function mountApp(root, { storage = createStorage(), now = Date.now, saveFile = defaultSaveFile, env = detectEnv(), loadFoods = importFoods } = {}) {
+export function mountApp(root, {
+  storage = createStorage(), now = Date.now, saveFile = defaultSaveFile, env = detectEnv(), loadFoods = importFoods,
+  version = VERSION, changelog = CHANGELOG,
+} = {}) {
   ensureSprite();
   const stored = storage.get(KEYS.entries, []);
   const lastExport = storage.get(KEYS.lastExport, null);
@@ -50,6 +56,7 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     importError: null,
     persisted: null,
     install: { ...env, canPrompt: false },
+    version,
     lookup: { query: '', status: 'idle' }, // idle | loading | ready | error
     plate: sanitizePlate(storage.get(KEYS.plate, [])), // a device-only draft, never in backups
   };
@@ -211,6 +218,12 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
 
     cancelImport: () => set({ importPreview: null, importError: null }),
 
+    // From Settings: this version's notes, with the rest of the history folded away.
+    showWhatsNew() {
+      const [current, ...earlier] = releasesUpTo(parseChangelog(changelog), version);
+      if (current) showWhatsNew({ title: `What’s new in ${current.version}`, releases: [current], earlier });
+    },
+
     async install() {
       if (deferredPrompt) {
         const e = deferredPrompt;
@@ -268,6 +281,22 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
   window.addEventListener('appinstalled', onInstalled);
 
   render();
+  announceUpdate();
+
+  // Once per new version: what changed since the version last seen (or, for someone who already has
+  // a log from before versions were tracked, everything so far). Fresh installs and rollbacks stay quiet.
+  function announceUpdate() {
+    const seen = storage.get(KEYS.seenVersion, null);
+    if (seen === version) return;
+    storage.set(KEYS.seenVersion, version);
+    const updated = seen == null ? state.entries.length > 0 : compareVersions(version, seen) > 0;
+    if (!updated) return;
+    const releases = parseChangelog(changelog);
+    const shown = notesSince(releases, seen, version);
+    if (!shown.length || shown[0].version !== version) return;
+    const earlier = seen == null ? [] : releasesUpTo(releases, seen);
+    showWhatsNew({ title: `Updated to ${version}`, releases: shown, earlier });
+  }
 
   return {
     actions,

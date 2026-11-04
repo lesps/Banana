@@ -1,46 +1,65 @@
 # Changelog
 
+Each release's bullets are shown in the app's "What's new" note, so they're written for the person using Banana. Notes for developers go under a "### Developer" heading, which the app skips.
+
+## 1.7.0 — 2026-11-04
+
+- A note like this one now pops up after each update, saying what's new. You can reopen it any time from Settings → What's new.
+
+### Developer
+
+- Release notes are read from this file at build time (`src/lib/changelog.js`); the last version seen is stored per device in `banana:seenVersion:v1`.
+
 ## 1.6.0 — 2026-11-04
 
-- Adding a portion from Look up now also prefills "What was it?" with the food and portion, e.g. "Bagel (regular)", added after " + " if you'd already typed something. Edit it or keep it before logging.
+- Adding a portion from Look up also fills in "What was it?" with the food and portion, like "Bagel (regular)". If you'd already typed something, it's added after a " + ". Edit it or keep it before logging.
 
 ## 1.5.0 — 2026-11-04
 
-- The plate is now a drawn plate: each banana you add lands on it (a cut half for each ½), dropping in with a bounce. Up to 14 are drawn, with a `+N` badge after that. The sum shows the last 3 amounts.
+- The plate is now a real plate: every banana you add lands on it, and a ½ goes on as a cut half. New ones drop in with a little bounce. Big meals show 14 bananas and a +N badge for the rest.
+- The sum next to the plate shows the last three amounts, so the total always fits.
 
 ## 1.4.0 — 2026-11-04
 
-- Swipe actions on logged items: swipe left to delete (with Undo), right for **Again**, which puts the same amount and label back on the plate. A short swipe opens the row on its button; a full swipe acts on release. Tapping still opens the editor.
+- Swipe a logged item left to delete it (with Undo), or right for Again, which puts the same amount and label back on your plate. A short swipe shows the button; a long swipe does it straight away. Tapping still opens the editor.
 
 ## 1.3.0 — 2026-11-04
 
-- **The plate**: the quick buttons and recent chips now add bananas to a plate instead of logging right away. The plate shows the sum, previews where it lands against your target (pending bananas in the row, "… left after this"), and **Log** writes it as one entry; ↶ removes the last amount, ✕ clears it. A meal labels itself from its chips when you haven't typed a label. The plate survives closing the app.
-- Look up portions are now tappable: they add their bananas to the plate and take you back to the day you were on, to adjust before logging. Nothing from the food database is saved with the entry.
+- Meet the plate. The amount buttons and recent chips now add bananas to a plate instead of logging right away, so a meal can be several taps. The plate shows the sum and where it will leave you against your target, and Log saves it as one entry. ↶ takes off the last amount; ✕ clears it.
+- A meal names itself after the recent chips you used, if you haven't typed a label. The plate is still there if you close the app.
+- In Look up, tap a portion to put its bananas on your plate and jump back to the day you were on.
 
 ## 1.2.0 — 2026-11-04
 
-- **Look up** tab: search about 5,200 foods from USDA FNDDS 2021–2023 and see each portion in bananas (typical serving tagged, little bananas per portion). Reference only; nothing is logged from it. Works offline; the list is its own 70 KB (gzipped) chunk, loaded the first time the tab opens.
-- Everyday-word aliases (donut, coke, boba, mac and cheese, cold brew…) and pinned top results for common searches.
-- `npm run foods` regenerates the list from the FNDDS JSON.
-- New, more realistic bananas everywhere: shaded peel, ridge, stem and tip; halves are cut open; overripe bananas get brown spots; a smiling banana on empty days. New app icon. Progress-row bananas are bigger (10 to a row).
+- New Look up tab: search about 5,200 everyday foods and see each portion in bananas, with the typical serving marked. It works offline.
+- Everyday words find the right food: donut, coke, boba, mac and cheese, cold brew and more.
+- New, more realistic bananas everywhere: shaded peel, a stem and a tip. Halves are cut open, bananas past your target go overripe with brown spots, and a smiling banana keeps you company on empty days. New app icon, and bigger bananas in the day's row (10 to a row).
+
+### Developer
+
+- Food data: USDA FoodData Central FNDDS 2021–2023, built by `npm run foods` into `src/data/foods.json`, shipped as its own 70 KB (gzipped) chunk that loads the first time Look up opens.
 
 ## 1.1.0 — 2026-11-03
 
 More bananas.
 
-- Quick-add buttons show their amount as small bananas.
-- Logged bananas pop into the day's row; the total gives a little bump.
-- Bananas past your target go overripe (brown spots), in the row and on History bars; History bars get stems.
-- A faint banana pattern behind the page, and a swaying banana on empty days and an empty history.
+- The amount buttons show their size as little bananas.
+- Bananas pop into the day's row as you log them, and the total gives a little bump.
+- Bananas past your target go overripe, with brown spots, in the row and on History bars. History bars get stems.
+- A faint banana pattern behind everything, and a swaying banana on empty days.
 
 ## 1.0.0 — 2026-11-03
 
 First release.
 
-- Log food in half-banana steps (1 banana ≈ 100 kcal) with one tap, an optional label, recent-food chips and Undo.
-- Edit an entry's amount, label or day; delete with Undo. Deleted entries are kept as markers so merges can't bring them back.
-- Each entry's day is stamped when it's logged, with a configurable start of day (default 4 a.m.).
-- Optional daily target with a banana-icon progress row.
-- History: 14-day bars with target line, past-week average over logged days, list of logged days.
-- Backup: JSON export (share sheet or download) and import with a preview, last-writer-wins merge, or replace; a reminder dot when a backup is a week overdue.
-- Installable offline PWA (GitHub Pages), light and dark themes.
+- Log food in bananas: one banana is about 100 calories, in half-banana steps, with an optional label, recent foods to tap again, and Undo.
+- Tap any entry to change its amount, label or day, or delete it.
+- Late-night snacks count toward the day before: a new day starts at 4 a.m. (change it in Settings).
+- An optional daily target with a row of bananas to fill.
+- History: the last 14 days as bars, your average for the past week, and every day you've logged.
+- Backups: export a file to keep somewhere safe and import it to restore or move to a new phone. A dot on Settings reminds you when a backup is a week overdue.
+- Install it to your Home Screen to use it offline. Light and dark themes.
+
+### Developer
+
+- Deleted entries are kept as markers so merging an old backup can't bring them back; imports merge per entry, newest edit wins.

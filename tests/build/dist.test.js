@@ -25,6 +25,14 @@ describe('dist/', () => {
     expect(js.filter((f) => readFileSync(f, 'utf8').includes('Bagel, wheat'))).toHaveLength(1);
   });
 
+  it('bundles the running version and its release notes', () => {
+    const { version } = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
+    const main = walk(join(dist, 'assets')).find((f) => /index-[\w-]+\.js$/.test(f));
+    const js = readFileSync(main, 'utf8');
+    expect(js).toMatch(new RegExp(`["'\`]${version.replaceAll('.', '\\.')}["'\`]`));
+    expect(js).toContain(`## ${version} —`);
+  });
+
   it('ships the icons', () => {
     for (const f of ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png']) {
       expect(existsSync(join(dist, f)), f).toBe(true);
