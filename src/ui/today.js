@@ -1,6 +1,7 @@
 import { h } from './dom.js';
 import { banana, bigBanana } from './banana.js';
 import { attachSwipe } from './swipe.js';
+import { plateArt } from './plate-art.js';
 import { formatDay, formatTime, dayOf } from '../lib/day.js';
 import { formatHalves, bananaRow, bananaWord, QUICK_HALVES } from '../lib/units.js';
 import { entriesForDay, recentLabels } from '../lib/log.js';
@@ -15,13 +16,16 @@ export function statusText(total, target, plated = 0) {
   return `of ${formatHalves(target)} · ${where}${plated ? ' after this' : ''}`;
 }
 
-function plateBar(plate, actions) {
+function plateBar(plate, dropFrom, actions) {
   if (!plate.length) return null;
   return h('div', { class: 'plate', role: 'group', 'aria-label': 'Plate' },
-    h('span', { class: 'plate-sum', 'aria-live': 'polite' }, formatPlate(plate)),
-    h('button', { type: 'button', class: 'icon-btn plate-undo', 'aria-label': 'Remove last', 'data-focus': 'plate-undo', onclick: actions.undoPlate }, '↶'),
-    h('button', { type: 'button', class: 'icon-btn plate-clear', 'aria-label': 'Clear plate', onclick: actions.clearPlate }, '✕'),
-    h('button', { type: 'button', class: 'btn primary log', 'data-focus': 'plate-log', onclick: actions.logPlate }, `Log ${formatHalves(plateTotal(plate))}`));
+    plateArt(plate, dropFrom),
+    h('div', { class: 'plate-side' },
+      h('span', { class: 'plate-sum', 'aria-live': 'polite' }, formatPlate(plate)),
+      h('div', { class: 'plate-buttons' },
+        h('button', { type: 'button', class: 'icon-btn plate-undo', 'aria-label': 'Remove last', 'data-focus': 'plate-undo', onclick: actions.undoPlate }, '↶'),
+        h('button', { type: 'button', class: 'icon-btn plate-clear', 'aria-label': 'Clear plate', onclick: actions.clearPlate }, '✕'),
+        h('button', { type: 'button', class: 'btn primary log', 'data-focus': 'plate-log', onclick: actions.logPlate }, `Log ${formatHalves(plateTotal(plate))}`))));
 }
 
 // Tap to edit; swipe left to delete, right to put it back on the plate. The swipe buttons are a
@@ -43,7 +47,7 @@ function entryRow(e, rolloverHour, actions) {
     row);
 }
 
-export function renderToday({ state, today, day, draft, setDraft, pop, actions }) {
+export function renderToday({ state, today, day, draft, setDraft, pop, dropFrom, actions }) {
   const { targetHalves: target, rolloverHour } = state.settings;
   const entries = entriesForDay(state.entries, day);
   const total = entries.reduce((n, e) => n + e.halves, 0);
@@ -97,7 +101,7 @@ export function renderToday({ state, today, day, draft, setDraft, pop, actions }
         }, formatHalves(q), h('span', { class: 'mini', 'aria-hidden': 'true' },
           bananaRow(q, null).icons.map(({ fill }) => banana(fill)))))),
       // Below the buttons, so they don't move under your finger when the plate appears.
-      plateBar(state.plate, actions)),
+      plateBar(state.plate, dropFrom, actions)),
 
     recents.length > 0 && h('div', { class: 'recents', role: 'group', 'aria-label': 'Add again' },
       recents.map((r) => h('button', { type: 'button', class: 'chip', onclick: () => actions.addToPlate(r.halves, r.label) },

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.0 — 2026-11-04
+
+- The plate is now a drawn plate: each banana you add lands on it (a cut half for each ½), dropping in with a bounce. Up to 14 are drawn, with a `+N` badge after that. The sum shows the last 3 amounts.
+
 ## 1.4.0 — 2026-11-04
 
 - Swipe actions on logged items: swipe left to delete (with Undo), right for **Again**, which puts the same amount and label back on the plate. A short swipe opens the row on its button; a full swipe acts on release. Tapping still opens the editor.

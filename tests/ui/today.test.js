@@ -290,4 +290,34 @@ describe('Today: the plate', () => {
     const t2 = mount({ storage });
     expect(sum(t2)).toBe('2 + ½ = 2½');
   });
+
+  const pieces = (t) => t.$$('.plate-art .piece').map((g) => g.querySelector('use').getAttribute('href'));
+
+  it('draws a banana on the plate for each whole one added, and a cut half for each ½', () => {
+    const t = mount();
+    t.quick('1½').click();
+    t.quick('½').click();
+    expect(pieces(t).sort()).toEqual(['#banana', '#banana-half', '#banana-half']);
+    expect(t.$('.plate-art').getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('drops in only the newest bananas, once', () => {
+    const t = mount();
+    t.quick('1').click();
+    expect(t.$$('.piece.drop')).toHaveLength(1);
+    t.quick('1½').click();
+    expect(t.$$('.piece')).toHaveLength(3);
+    expect(t.$$('.piece.drop').map((g) => g.querySelector('use').getAttribute('href')).sort()).toEqual(['#banana', '#banana-half']);
+    t.app.actions.setView('today');
+    expect(t.$$('.piece.drop')).toHaveLength(0);
+    t.plate().querySelector('[aria-label="Remove last"]').click();
+    expect(t.$$('.piece.drop')).toHaveLength(0);
+  });
+
+  it('draws up to 14 bananas and counts the rest', () => {
+    const t = mount();
+    for (let i = 0; i < 6; i++) t.quick('3').click();
+    expect(t.$$('.piece')).toHaveLength(14);
+    expect(t.$('.plate-more').textContent).toBe('+4');
+  });
 });

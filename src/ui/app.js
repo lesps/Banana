@@ -57,6 +57,7 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
   let destroyed = false;
   let draft = '';
   let pop = null; // { day, from }: one-shot, so the next render animates what was just logged
+  let dropFrom = null; // one-shot: index of the first plate item added since the last render
   let deferredPrompt = null;
 
   const today = () => dayOf(now(), state.settings.rolloverHour);
@@ -74,9 +75,9 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     return ok;
   }
 
-  function savePlate(plate) {
+  function savePlate(plate, patch = {}) {
     storage.set(KEYS.plate, plate);
-    set({ plate });
+    set({ plate, ...patch });
   }
 
   function commitSettings(patch) {
@@ -107,13 +108,14 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     openDay: (day) => set({ view: 'today', day: day && day < today() ? day : null }),
     stepDay: (n) => actions.openDay(addDays(shownDay(), n)),
 
-    addToPlate(halves, label) {
+    addToPlate(halves, label, patch = {}) {
       const plate = addToPlate(state.plate, halves, label);
       if (!plate) {
         toast('A plate holds up to 100 bananas.');
         return false;
       }
-      savePlate(plate);
+      dropFrom = state.plate.length;
+      savePlate(plate, patch);
       return true;
     },
     undoPlate: () => savePlate(undoPlate(state.plate)),
@@ -121,7 +123,7 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
 
     // From Look up: the portion's bananas go on the plate (no label), back on the day being shown.
     addFromLookup(halves) {
-      if (actions.addToPlate(halves)) set({ view: 'today' });
+      actions.addToPlate(halves, '', { view: 'today' });
     },
 
     logPlate() {
@@ -237,8 +239,9 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     const active = document.activeElement;
     const focusKey = root.contains(active) ? active.dataset.focus : undefined;
     const sel = focusKey && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
-    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, pop, foodIndex, actions };
+    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, pop, dropFrom, foodIndex, actions };
     pop = null;
+    dropFrom = null;
     root.replaceChildren(h('main', { class: `view view-${state.view}` }, VIEWS[state.view](ctx)), tabs());
     lastToday = ctx.today;
     if (focusKey) {

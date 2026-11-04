@@ -2,7 +2,7 @@
 import { formatHalves, MAX_HALVES } from './units.js';
 import { cleanLabel } from './log.js';
 
-const SHOWN = 5;
+const SHOWN = 3; // amounts shown in the sum before it starts with …
 
 export const plateTotal = (plate) => plate.reduce((n, i) => n + i.halves, 0);
 
@@ -42,4 +42,12 @@ export function sanitizePlate(stored) {
     plate = addToPlate(plate, halves, typeof item.label === 'string' ? item.label : '') ?? plate;
   }
   return plate;
+}
+
+// What to draw on the plate: per item, a whole banana per 2 halves and a cut half for an odd one.
+export function platePieces(plate) {
+  return plate.flatMap(({ halves }, item) => [
+    ...Array.from({ length: Math.floor(halves / 2) }, () => ({ kind: 'whole', item })),
+    ...(halves % 2 ? [{ kind: 'half', item }] : []),
+  ]);
 }

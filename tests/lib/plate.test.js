@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { plateTotal, addToPlate, undoPlate, plateLabel, formatPlate, sanitizePlate } from '../../src/lib/plate.js';
+import { plateTotal, addToPlate, undoPlate, plateLabel, formatPlate, sanitizePlate, platePieces } from '../../src/lib/plate.js';
 
 const p = (...items) => items.map((x) => (Array.isArray(x) ? { halves: x[0], label: x[1] } : { halves: x }));
 
@@ -36,7 +36,8 @@ describe('plate', () => {
     expect(formatPlate([])).toBe('');
     expect(formatPlate(p(3))).toBe('1½');
     expect(formatPlate(p(2, 4, 1))).toBe('1 + 2 + ½ = 3½');
-    expect(formatPlate(p(2, 2, 2, 2, 2, 2, 2))).toBe('… + 1 + 1 + 1 + 1 + 1 = 7');
+    expect(formatPlate(p(2, 2, 2, 2, 2, 2, 2))).toBe('… + 1 + 1 + 1 = 7');
+    expect(formatPlate(p(2, 4, 1))).toBe('1 + 2 + ½ = 3½');
   });
 
   it('reads back a stored plate, dropping anything invalid', () => {
@@ -44,5 +45,12 @@ describe('plate', () => {
       .toEqual([{ halves: 2 }, { halves: 4, label: 'Soup' }, { halves: 1 }]);
     expect(sanitizePlate('nope')).toEqual([]);
     expect(sanitizePlate(p(150, 150))).toEqual(p(150));
+  });
+
+  it('breaks the plate into pieces to draw: a banana per whole one, a cut half per ½, item by item', () => {
+    expect(platePieces(p(3, 1, 4))).toEqual([
+      { kind: 'whole', item: 0 }, { kind: 'half', item: 0 }, { kind: 'half', item: 1 }, { kind: 'whole', item: 2 }, { kind: 'whole', item: 2 },
+    ]);
+    expect(platePieces([])).toEqual([]);
   });
 });

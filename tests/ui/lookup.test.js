@@ -105,6 +105,7 @@ describe('Look up', () => {
     expect(t.$('#label').value).toBe('Breakfast');
     expect(t.app.state().entries).toEqual([]);
     expect(t.app.state().plate).toEqual([{ halves: 2 }, { halves: 5 }]);
+    expect(t.$$('.piece.drop')).toHaveLength(3); // the bagel's 2½ bananas drop onto the plate
   });
 
   it('can’t add a portion that rounds to nothing', async () => {
