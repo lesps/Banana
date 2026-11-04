@@ -1,5 +1,6 @@
 import { h } from './dom.js';
 import { banana, bigBanana } from './banana.js';
+import { attachSwipe } from './swipe.js';
 import { formatDay, formatTime, dayOf } from '../lib/day.js';
 import { formatHalves, bananaRow, bananaWord, QUICK_HALVES } from '../lib/units.js';
 import { entriesForDay, recentLabels } from '../lib/log.js';
@@ -21,6 +22,25 @@ function plateBar(plate, actions) {
     h('button', { type: 'button', class: 'icon-btn plate-undo', 'aria-label': 'Remove last', 'data-focus': 'plate-undo', onclick: actions.undoPlate }, '↶'),
     h('button', { type: 'button', class: 'icon-btn plate-clear', 'aria-label': 'Clear plate', onclick: actions.clearPlate }, '✕'),
     h('button', { type: 'button', class: 'btn primary log', 'data-focus': 'plate-log', onclick: actions.logPlate }, `Log ${formatHalves(plateTotal(plate))}`));
+}
+
+// Tap to edit; swipe left to delete, right to put it back on the plate. The swipe buttons are a
+// touch shortcut only (hidden from screen readers and the tab order); the editor and the recent
+// chips do the same jobs accessibly.
+function entryRow(e, rolloverHour, actions) {
+  const again = () => actions.addToPlate(e.halves, e.label);
+  const remove = () => actions.remove(e.id);
+  const row = h('button', { type: 'button', class: 'entry' },
+    // The time only means something when the entry was logged on its own day.
+    h('span', { class: 'time' }, dayOf(e.ts, rolloverHour) === e.day ? formatTime(e.ts) : ''),
+    h('span', { class: 'label' }, e.label || 'Food'),
+    h('span', { class: 'amount' }, formatHalves(e.halves)));
+  attachSwipe(row, { onTap: () => actions.edit(e.id), onDelete: remove, onAgain: again });
+  return h('li', { class: 'swipe' },
+    h('div', { class: 'swipe-actions', 'aria-hidden': 'true' },
+      h('button', { type: 'button', class: 'swipe-again', tabindex: '-1', onclick: again }, 'Again'),
+      h('button', { type: 'button', class: 'swipe-delete', tabindex: '-1', onclick: remove }, 'Delete')),
+    row);
 }
 
 export function renderToday({ state, today, day, draft, setDraft, pop, actions }) {
@@ -84,12 +104,7 @@ export function renderToday({ state, today, day, draft, setDraft, pop, actions }
         `${r.label} · ${formatHalves(r.halves)}`))),
 
     entries.length
-      ? h('ol', { class: 'entries' }, entries.map((e) => h('li', {},
-        h('button', { type: 'button', class: 'entry', onclick: () => actions.edit(e.id) },
-          // The time only means something when the entry was logged on its own day.
-          h('span', { class: 'time' }, dayOf(e.ts, rolloverHour) === e.day ? formatTime(e.ts) : ''),
-          h('span', { class: 'label' }, e.label || 'Food'),
-          h('span', { class: 'amount' }, formatHalves(e.halves))))))
+      ? h('ol', { class: 'entries' }, entries.map((e) => entryRow(e, rolloverHour, actions)))
       : emptyState(day === today ? 'Nothing logged yet today.' : 'Nothing logged this day.'),
   ];
 }

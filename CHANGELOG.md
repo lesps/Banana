@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0 — 2026-11-04
+
+- Swipe actions on logged items: swipe left to delete (with Undo), right for **Again**, which puts the same amount and label back on the plate. A short swipe opens the row on its button; a full swipe acts on release. Tapping still opens the editor.
+
 ## 1.3.0 — 2026-11-04
 
 - **The plate**: the quick buttons and recent chips now add bananas to a plate instead of logging right away. The plate shows the sum, previews where it lands against your target (pending bananas in the row, "… left after this"), and **Log** writes it as one entry; ↶ removes the last amount, ✕ clears it. A meal labels itself from its chips when you haven't typed a label. The plate survives closing the app.

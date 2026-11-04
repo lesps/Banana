@@ -183,6 +183,23 @@ input[type='date'] { appearance: none; -webkit-appearance: none; }
   background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
 }
 .entries li + li, .days li + li { border-top: 1px solid var(--line); }
+
+/* Swipe actions on logged items: the row slides over its two buttons. */
+.entries li.swipe { position: relative; overflow: hidden; }
+.swipe-actions { position: absolute; inset: 0; display: flex; justify-content: space-between; }
+.swipe-actions button { width: 88px; border: 0; font-weight: 700; font-size: 15px; transition: width 160ms ease; }
+.swipe-again { background: var(--banana); color: var(--banana-ink); }
+.swipe-delete { background: var(--danger); color: #fff; }
+/* Past the full-swipe point, the action fills the row: letting go does it. */
+.swipe.commit-left .swipe-again, .swipe.commit-right .swipe-delete { display: none; }
+.swipe.commit-left .swipe-delete, .swipe.commit-right .swipe-again { width: 100%; padding: 0 30px; }
+.swipe.commit-left .swipe-delete { text-align: right; }
+.swipe.commit-right .swipe-again { text-align: left; }
+.entries .entry {
+  position: relative; background: var(--surface); touch-action: pan-y;
+  -webkit-user-select: none; user-select: none; transition: transform 180ms ease;
+}
+.entries .entry.dragging { transition: none; }
 .entry, .day {
   display: grid; align-items: center; gap: 10px; width: 100%; min-height: 52px;
   padding: 10px 16px; border: 0; background: transparent; text-align: left;
