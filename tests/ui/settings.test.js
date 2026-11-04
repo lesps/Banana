@@ -163,4 +163,10 @@ describe('Settings: storage and install', () => {
     t.tab('settings');
     expect(t.button('Install app')).toBeUndefined();
   });
+
+  it('credits the food data', () => {
+    const t = mount();
+    t.tab('settings');
+    expect(t.$('.about').textContent).toMatch(/Food estimates: USDA FoodData Central \(FNDDS 2021–2023\), public domain\./);
+  });
 });

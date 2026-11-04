@@ -10,6 +10,7 @@ Log food in bananas. One banana is about 100 calories, so a latte is "1", a burr
 - **Edit and delete**: tap any entry to change its amount, label or day, or delete it (with Undo).
 - **Past days**: step back with `‹` to see or fill in an earlier day.
 - **Late nights count toward the day before**: a new day starts at 4 a.m. by default (Settings → New day starts at). Each entry's day is fixed when you log it, so changing this later doesn't move anything.
+- **Look up**: search about 5,200 everyday foods (bagel, burrito, latte, pad thai, Big Mac…) and see each portion in bananas, so you can estimate before you log. It's only a reference; your log stays your own estimates. Works offline.
 - **History**: the last 14 days as bars with your target line, the average of the days you logged this past week, and every logged day with its total.
 - **Backup**: Settings → Export backup shares or downloads a JSON file. Import shows what the file contains and what it would change before you merge it or replace everything.
 
@@ -38,6 +39,10 @@ Everything stays on your device in the browser's storage. Nothing is sent anywhe
 
 Amounts are in half-bananas (`halves: 3` = 1½ bananas). Deleted entries appear with `"deleted": true`. Full details in [SPEC.md](SPEC.md).
 
+## Food data
+
+Look up uses USDA [FoodData Central](https://fdc.nal.usda.gov/)'s FNDDS 2021–2023 "survey foods", which is public domain. To regenerate `src/data/foods.json` after a new FNDDS release, download **Survey Foods (FNDDS), JSON** from the [downloads page](https://fdc.nal.usda.gov/download-datasets), unzip it, and run `npm run foods -- path/to/surveyDownload.json`. Search aliases and pins live in `src/lib/food-aliases.js`.
+
 ## Development
 
 ```bash
@@ -46,6 +51,7 @@ npm test                              # unit + UI tests
 npm run build && npm run test:build   # build, then check dist/
 npm run dev                           # http://localhost:5173/
 npm run icons                         # regenerate icons from assets/icon.svg
+npm run foods -- surveyDownload.json  # regenerate the food list
 ```
 
 Vite, plain ES modules, `vite-plugin-pwa`, Vitest + jsdom. See [CLAUDE.md](CLAUDE.md) for the code layout and conventions.

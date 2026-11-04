@@ -7,7 +7,7 @@ const svg = await readFile(`${root}assets/icon.svg`, 'utf8');
 // Maskable icons need a full-bleed background and the glyph inside the 80% safe zone.
 const maskable = svg
   .replace(/(<rect id="bg"[^>]*?) rx="\d+"/, '$1')
-  .replace('translate(29 61) scale(6.4)', 'translate(65 92) scale(5.4)');
+  .replace('translate(38 48) scale(6.4)', 'translate(79 87) scale(5.2)');
 
 const out = [
   ['icon-192.png', svg, 192],

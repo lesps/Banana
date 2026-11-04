@@ -13,9 +13,16 @@ const walk = (dir) => readdirSync(dir).flatMap((f) => {
 describe('dist/', () => {
   it('exists (run `npm run build` first)', () => expect(existsSync(join(dist, 'index.html'))).toBe(true));
 
-  it('is small: under 300 KB in total', () => {
+  it('is small: under 1 MB in total, the food list included', () => {
     const bytes = walk(dist).reduce((n, f) => n + statSync(f).size, 0);
-    expect(bytes).toBeLessThan(300 * 1024);
+    expect(bytes).toBeLessThan(1024 * 1024);
+  });
+
+  it('keeps the food list out of the main bundle, in its own chunk', () => {
+    const js = walk(join(dist, 'assets')).filter((f) => f.endsWith('.js'));
+    const main = js.find((f) => /index-[\w-]+\.js$/.test(f));
+    expect(readFileSync(main, 'utf8')).not.toContain('Bagel, wheat');
+    expect(js.filter((f) => readFileSync(f, 'utf8').includes('Bagel, wheat'))).toHaveLength(1);
   });
 
   it('ships the icons', () => {
@@ -55,5 +62,10 @@ describe('service worker', () => {
     expect(sw).toMatch(/assets\/index-[\w-]+\.js/);
     expect(sw).toMatch(/assets\/index-[\w-]+\.css/);
     expect(sw).toMatch(/\.woff2/);
+  });
+
+  it('precaches the food list chunk, so Look up works offline', () => {
+    const chunk = walk(join(dist, 'assets')).find((f) => f.endsWith('.js') && readFileSync(f, 'utf8').includes('Bagel, wheat'));
+    expect(sw).toContain(chunk.slice(dist.length));
   });
 });

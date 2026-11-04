@@ -1,10 +1,12 @@
 import { h } from './dom.js';
+import { ensureSprite, SILHOUETTE } from './banana.js';
 import { createStorage } from './storage.js';
 import { toast } from './toast.js';
 import { detectEnv, showIosHelp } from './install.js';
 import { saveFile as defaultSaveFile } from './files.js';
 import { renderToday } from './today.js';
 import { renderHistory } from './history.js';
+import { renderLookup } from './lookup.js';
 import { renderSettings } from './settings.js';
 import { openEditor } from './editor.js';
 import { dayOf, addDays } from '../lib/day.js';
@@ -12,23 +14,28 @@ import { formatHalves, countEntries } from '../lib/units.js';
 import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue } from '../lib/log.js';
 import { exportData, backupFilename, parseBackup, mergeBackup, validEntry } from '../lib/backup.js';
 import { sanitizeSettings } from '../lib/settings.js';
+import { prepareFoods } from '../lib/foods.js';
 
 export const KEYS = { entries: 'banana:entries:v1', settings: 'banana:settings:v1', lastExport: 'banana:lastExport:v1' };
 export const PAGE = 30;
 
 const ICONS = {
-  today: `<svg viewBox="8 3 54 56" aria-hidden="true"><path d="M14.5 13.5C9 32 18.5 52 39 56c11 2.2 19.5-4 21.5-12.6.5-2.2-1.6-3.6-3.4-2.4-7.4 4.6-17.6 4.2-24.6-1.3C25.4 34.4 22.4 25 23.5 14.4Z M19.9 14.5L18.9 5.5C18.8 4.5 17.9 3.8 16.9 4L13.9 4.6C12.9 4.8 12.3 5.7 12.5 6.7L14.1 14.7Z" fill="currentColor"/></svg>`,
+  today: `<svg viewBox="8 5 52 54" aria-hidden="true"><path d="${SILHOUETTE}" fill="currentColor"/></svg>`,
+  lookup: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15 15l5 5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
   history: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V12M10 20V6M15 20V10M20 20V4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>',
   settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/><circle cx="16" cy="7" r="2.3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="8" cy="17" r="2.3" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>',
 };
-const TABS = [['today', 'Today'], ['history', 'History'], ['settings', 'Settings']];
+const TABS = [['today', 'Today'], ['lookup', 'Look up'], ['history', 'History'], ['settings', 'Settings']];
+// The food list is its own chunk, fetched the first time Look up opens (and precached for offline).
+const importFoods = () => import('../data/foods.json').then((m) => m.default);
 
 export function mergeMessage({ added, updated, removed }) {
   const parts = [added && `added ${added}`, updated && `updated ${updated}`, removed && `removed ${removed}`].filter(Boolean);
   return parts.length ? `Merged: ${parts.join(', ')}.` : 'Nothing new in that file.';
 }
 
-export function mountApp(root, { storage = createStorage(), now = Date.now, saveFile = defaultSaveFile, env = detectEnv() } = {}) {
+export function mountApp(root, { storage = createStorage(), now = Date.now, saveFile = defaultSaveFile, env = detectEnv(), loadFoods = importFoods } = {}) {
+  ensureSprite();
   const stored = storage.get(KEYS.entries, []);
   const lastExport = storage.get(KEYS.lastExport, null);
   let state = {
@@ -42,7 +49,10 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     importError: null,
     persisted: null,
     install: { ...env, canPrompt: false },
+    lookup: { query: '', status: 'idle' }, // idle | loading | ready | error
   };
+  let foodIndex = null;
+  let destroyed = false;
   let draft = '';
   let pop = null; // { day, from }: one-shot, so the next render animates what was just logged
   let deferredPrompt = null;
@@ -69,7 +79,24 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
   }
 
   const actions = {
-    setView: (view) => set({ view }),
+    setView(view) {
+      set({ view });
+      if (view === 'lookup' && state.lookup.status === 'idle') actions.loadFoods();
+    },
+
+    loadFoods() {
+      set({ lookup: { ...state.lookup, status: 'loading' } });
+      loadFoods().then(
+        (data) => {
+          if (destroyed) return;
+          foodIndex = prepareFoods(data);
+          set({ lookup: { ...state.lookup, status: 'ready' } });
+        },
+        () => { if (!destroyed) set({ lookup: { ...state.lookup, status: 'error' } }); },
+      );
+    },
+
+    setLookupQuery: (query) => set({ lookup: { ...state.lookup, query } }),
     openDay: (day) => set({ view: 'today', day: day && day < today() ? day : null }),
     stepDay: (n) => actions.openDay(addDays(shownDay(), n)),
 
@@ -172,13 +199,13 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
       view === 'settings' && due && h('span', { class: 'dot', role: 'img', 'aria-label': 'Backup due' }))));
   }
 
-  const VIEWS = { today: renderToday, history: renderHistory, settings: renderSettings };
+  const VIEWS = { today: renderToday, lookup: renderLookup, history: renderHistory, settings: renderSettings };
 
   function render() {
     const active = document.activeElement;
     const focusKey = root.contains(active) ? active.dataset.focus : undefined;
     const sel = focusKey && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
-    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, pop, actions };
+    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, pop, foodIndex, actions };
     pop = null;
     root.replaceChildren(h('main', { class: `view view-${state.view}` }, VIEWS[state.view](ctx)), tabs());
     lastToday = ctx.today;
@@ -208,6 +235,7 @@ export function mountApp(root, { storage = createStorage(), now = Date.now, save
     actions,
     state: () => state,
     destroy() {
+      destroyed = true;
       clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('beforeinstallprompt', onPrompt);

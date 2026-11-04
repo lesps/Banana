@@ -31,12 +31,12 @@ Amounts are stored as an integer number of **half-bananas** (`halves`). ½ banan
 
 ## Screens
 
-Bottom tabs: **Today**, **History**, **Settings**. Tapping Today always returns to today. The first time the service worker finishes caching, a toast says the app is ready to work offline.
+Bottom tabs: **Today**, **Look up**, **History**, **Settings**. Tapping Today always returns to today. The first time the service worker finishes caching, a toast says the app is ready to work offline.
 
 ### Today (the day view)
 
 - Day navigator `‹ Today ›`. `›` is disabled on today. The view always means "today" unless you step back or open a day from History; it follows the rollover while the app is open.
-- Total for the day, large, plus a row of banana icons: with a target, one icon per target banana (filled, half-filled or empty, and bananas past the target drawn overripe, deeper yellow with brown spots); without a target, one icon per banana eaten. A line under it says "of 18" / "4½ left" / "1 over". After a log, the bananas it filled pop into the row one after another and the number gives a small bump (once, on the render right after logging; not on Undo; off with reduced motion).
+- Total for the day, large, plus a row of banana icons: with a target, one icon per target banana (whole, cut in half, or an empty outline, and bananas past the target drawn overripe, deeper yellow with brown spots); without a target, one icon per banana eaten. A line under it says "of 18" / "4½ left" / "1 over". After a log, the bananas it filled pop into the row one after another and the number gives a small bump (once, on the render right after logging; not on Undo; off with reduced motion).
 - An optional "What was it?" label field, then quick-add buttons `½ 1 1½ 2 3`, each showing its amount as small bananas under the number. Tapping one logs that amount with the label (if any) on the shown day, clears the label and shows a toast `Logged 1½ · Undo`.
 - Recent chips, in one horizontally scrolling row: up to 8 distinct recent labels with the amount last used ("Latte · 1½"). One tap logs it again. The label field also suggests up to 50 past labels.
 - The day's entries, oldest first: time (only when the entry was logged on its own day, since a back-filled entry's creation time says nothing about when it was eaten), label (or "Food"), amount. Tapping one opens the editor.
@@ -44,6 +44,19 @@ Bottom tabs: **Today**, **History**, **Settings**. Tapping Today always returns 
 ### Editor (dialog)
 
 Amount stepper (− / value / +, ½ steps, min ½), label, day (date input, no future dates), **Save**, **Delete**, **Cancel**. Delete closes the dialog and shows `Deleted · Undo`.
+
+### Look up
+
+A reference for estimating, separate from the log: nothing here creates or changes an entry.
+
+- A search box. The search survives switching tabs (not reloads).
+- Before typing: a hint and example searches (bagel, burrito, latte, pizza, beer, salad) that fill the box.
+- Results (up to 30, with "Showing 30 of N. Add a word to narrow it down." when there are more): each food's name and up to 4 portions, each as its label, little bananas (up to 10) and the amount in bananas. FNDDS's typical serving is tagged **typical**. Portions under ¼ banana show `<½`.
+- "No match for “…”. Try a simpler word." when nothing matches.
+- The food list loads the first time the tab opens ("Loading foods…"), from its own precached chunk, so it works offline; if it fails, "Couldn’t load the food list." with **Try again**.
+- A credit line: estimates from USDA FoodData Central (FNDDS 2021–2023), rounded to the nearest ½ banana; restaurant portions often run bigger.
+
+Search: every query word must match the start of a word in the name (any order; case, accents and apostrophes ignored; filler words like "and" and "with" skipped; a plural matches its singular as a whole word, so "tacos" finds "Taco" but "fries" doesn't find "fried"). Hand-kept **aliases** translate everyday words into FNDDS's vocabulary (donut → doughnut, coke → soft drink cola, boba → bubble tea, mac and cheese → macaroni or noodles with cheese); alias matches come first and the literal words are still searched after. Hand-kept **pins** put specific foods first for common one-word searches (egg → fried, boiled, scrambled). Otherwise: names whose first part is the query, then names starting with it, then fewer parts, then shorter names.
 
 ### History
 
@@ -73,9 +86,15 @@ File name `banana-YYYY-MM-DD.json`. Exports include deleted markers.
 
 **Replace**: data and settings become exactly the file's.
 
+## Food data
+
+`src/data/foods.json` is generated from USDA FoodData Central's FNDDS 2021–2023 "survey foods" (public domain) by `npm run foods -- path/to/surveyDownload.json` and committed. The build skips baby food, formula, ingredient-only entries and water; strips FNDDS's "not further specified" markers from names ("Yogurt, NFS" → "Yogurt"; "NS as to …" phrases, except the two that run past a comma); drops portions nobody estimates in (cubic inch, teaspoon, fl oz, oz…); keeps the typical serving ("Quantity not specified", folded into a named portion of the same weight, else listed as "serving") plus up to 3 portions nearest it in size; converts each to whole half-bananas; and keeps the first of any foods whose cleaned names collide. About 5,200 foods, 70 KB gzipped. Shape: `{ source, foods: [[foodCode, name, [[portion, halves, typical?], …]], …] }`.
+
+SR Legacy, Foundation and Branded foods were evaluated and left out: SR Legacy is mostly raw ingredients (its 148 chain-restaurant items date from 2018 or earlier), Foundation is 424 raw commodities with sparse portions, and Branded is 434,000 packaged products (37 MB even stripped down) whose calories are printed on the package.
+
 ## Look
 
-Cream and banana yellow, light and dark themes, a faint pattern of scattered bananas behind the page, and the same banana glyph for the progress row, the quick buttons, the Today tab and the empty states (a big, gently swaying banana when a day or the history is empty).
+Cream and banana yellow, light and dark themes, a faint pattern of scattered banana silhouettes behind the page. Bananas are drawn from one inline SVG sprite: shaded peel, a ridge, a highlight, a green-tinged neck, a stem and a dark tip. A whole banana; a half is the stem half cut open (pale flesh showing) over an empty outline; an empty banana is the outline alone. Past the target they go overripe: deeper yellow with brown spots. The quick buttons use one-colour versions; the empty states show a big banana with a smiling face that sways gently.
 
 ## Stack
 

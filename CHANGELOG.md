@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-11-04
+
+- **Look up** tab: search about 5,200 foods from USDA FNDDS 2021–2023 and see each portion in bananas (typical serving tagged, little bananas per portion). Reference only; nothing is logged from it. Works offline; the list is its own 70 KB (gzipped) chunk, loaded the first time the tab opens.
+- Everyday-word aliases (donut, coke, boba, mac and cheese, cold brew…) and pinned top results for common searches.
+- `npm run foods` regenerates the list from the FNDDS JSON.
+- New, more realistic bananas everywhere: shaded peel, ridge, stem and tip; halves are cut open; overripe bananas get brown spots; a smiling banana on empty days. New app icon. Progress-row bananas are bigger (10 to a row).
+
 ## 1.1.0 — 2026-11-03
 
 More bananas.

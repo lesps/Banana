@@ -159,9 +159,25 @@ describe('Today: bananas', () => {
     expect(t.$$('.row .b.pop')).toHaveLength(0);
   });
 
-  it('shows a banana on an empty day, hidden from screen readers', () => {
+  it('shows a smiling banana on an empty day, hidden from screen readers', () => {
     const t = mount();
     expect(t.$('.empty .empty-banana').getAttribute('aria-hidden')).toBe('true');
+    expect(t.$('.empty .empty-banana use').getAttribute('href')).toBe('#banana-face');
     expect(t.$('.empty').textContent).toBe('Nothing logged yet today.');
+  });
+
+  it('draws whole, cut-in-half and empty bananas from one shared sprite', () => {
+    const t = mount();
+    t.app.actions.setTarget(6);
+    t.quick('1½').click();
+    const uses = (b) => [...b.querySelectorAll('use')].map((u) => `${u.getAttribute('href')}${u.classList.contains('ghost') ? ' ghost' : ''}`);
+    const [whole, half, empty] = t.$$('.row .b');
+    expect(uses(whole)).toEqual(['#banana']);
+    expect(uses(half)).toEqual(['#banana ghost', '#banana-half']);
+    expect(uses(empty)).toEqual(['#banana ghost']);
+    expect(uses(t.quick('½').querySelector('.mini .b'))).toEqual(['#banana ghost', '#banana-half']);
+    mount();
+    expect(document.querySelectorAll('#banana-sprite')).toHaveLength(1);
+    for (const id of ['banana', 'banana-half', 'banana-face']) expect(document.getElementById(id).tagName).toBe('symbol');
   });
 });

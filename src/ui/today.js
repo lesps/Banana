@@ -1,10 +1,10 @@
 import { h } from './dom.js';
+import { banana, bigBanana } from './banana.js';
 import { formatDay, formatTime, dayOf } from '../lib/day.js';
 import { formatHalves, bananaRow, bananaWord, QUICK_HALVES } from '../lib/units.js';
 import { entriesForDay, recentLabels } from '../lib/log.js';
 
-export const emptyState = (text) =>
-  h('div', { class: 'empty' }, h('span', { class: 'empty-banana', 'aria-hidden': 'true' }), h('p', {}, text));
+export const emptyState = (text) => h('div', { class: 'empty' }, bigBanana(), h('p', {}, text));
 
 export function statusText(total, target) {
   const diff = target - total;
@@ -22,7 +22,7 @@ export function renderToday({ state, today, day, draft, setDraft, pop, actions }
   let popped = 0;
   const icon = (i, { fill, over }) => {
     const grew = before != null && fill > Math.max(0, Math.min(2, before - 2 * i));
-    return h('span', { class: `b f${fill}${over ? ' over' : ''}${grew ? ' pop' : ''}`, style: grew ? `--i:${popped++}` : null });
+    return banana(fill, { over, pop: grew, i: grew ? popped++ : undefined });
   };
   const recents = recentLabels(state.entries);
   const suggestions = recentLabels(state.entries, 50);
@@ -53,7 +53,7 @@ export function renderToday({ state, today, day, draft, setDraft, pop, actions }
         QUICK_HALVES.map((q) => h('button', {
           type: 'button', 'aria-label': `Log ${formatHalves(q)} ${bananaWord(q)}`, onclick: () => actions.log(q),
         }, formatHalves(q), h('span', { class: 'mini', 'aria-hidden': 'true' },
-          bananaRow(q, null).icons.map(({ fill }) => h('span', { class: `b f${fill}` }))))))),
+          bananaRow(q, null).icons.map(({ fill }) => banana(fill))))))),
 
     recents.length > 0 && h('div', { class: 'recents', role: 'group', 'aria-label': 'Log again' },
       recents.map((r) => h('button', { type: 'button', class: 'chip', onclick: () => actions.log(r.halves, r.label) },
