@@ -413,6 +413,7 @@ dialog.whats-new { max-height: min(80vh, 640px); overflow-y: auto; padding: 18px
 .whats-new form { margin-top: 18px; }
 .whats-new form .btn { width: 100%; }
 .version-line { text-align: center; color: var(--muted); font-size: 14px; margin: 28px 0 -18px; }
+.update-ready { text-align: center; font-size: 14px; margin: 26px 0 -16px; }
 .link { border: 0; padding: 0; background: none; color: inherit; font: inherit; text-decoration: underline; }
 .ios-help li { margin: 6px 0; }
 

@@ -103,6 +103,9 @@ export function renderSettings(ctx) {
     h('p', { class: 'version-line' },
       h('span', { class: 'version' }, `Version ${state.version}`), ' · ',
       h('button', { type: 'button', class: 'link', onclick: actions.showWhatsNew }, 'What’s new')),
+    state.updateReady && h('p', { class: 'update-ready' },
+      'Update ready. It’ll apply next time you open Banana. ',
+      h('button', { type: 'button', class: 'link', onclick: actions.applyUpdate }, 'Restart now')),
     h('p', { class: 'about' }, 'Inspired by One Banana. Food estimates: USDA FoodData Central (FNDDS 2021–2023), public domain. ',
       h('a', { href: REPO_URL, target: '_blank', rel: 'noopener' }, 'Source on GitHub')),
   ];

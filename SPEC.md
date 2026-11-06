@@ -74,13 +74,17 @@ Search: every query word must match the start of a word in the name (any order; 
 - Storage note when `persist()` was not granted: the browser may clear data, so install the app and keep backups.
 - Install button (with iPhone/iPad instructions), or a hint to use the browser menu when the browser offers no install prompt; "Installed" when running standalone.
 
-- At the bottom: "Version 1.7.0 · What's new". **What's new** opens the note for the running version, with every earlier release folded under "Earlier updates".
+- At the bottom: "Version 1.8.0 · What's new", and "Update ready … Restart now" while a downloaded update is waiting (see Updates). **What's new** opens the note for the running version, with every earlier release folded under "Earlier updates".
 
 A dot on the Settings tab means a backup is due: there are changes since the last export, and the last export (or the first entry, if never exported) was 7 or more days ago.
 
+## Updates
+
+New versions download in the background whenever the app opens with a connection, and wait. They take over the next time Banana is launched, never by reloading the app while it's in use. While one is waiting, Settings shows "Update ready. It'll apply next time you open Banana. **Restart now**"; Restart now switches over immediately (the page reloads into the new version). Opening the app never waits on the network: everything it needs is in the offline copy.
+
 ## What's new
 
-After the app updates itself (the service worker auto-updates and the page reloads), it shows a note once: the smiling banana, "Updated to 1.7.0", and the bullets for every release since the version this device last saw, newest first (a heading per release when there's more than one), with the older history folded under "Earlier updates". The note opens at the top (focus goes to its heading); a round **✕** pinned to its top corner while it scrolls, or **Got it** at the bottom, closes it. Someone who already has a log but no version on record (they used the app before versions were tracked) gets a catch-up with every release so far. A fresh install, a rollback, or a version with no notes shows nothing. Either way the running version is recorded.
+After the app has updated, it shows a note once: the smiling banana, "Updated to 1.7.0", and the bullets for every release since the version this device last saw, newest first (a heading per release when there's more than one), with the older history folded under "Earlier updates". The note opens at the top (focus goes to its heading); a round **✕** pinned to its top corner while it scrolls, or **Got it** at the bottom, closes it. Someone who already has a log but no version on record (they used the app before versions were tracked) gets a catch-up with every release so far. A fresh install, a rollback, or a version with no notes shows nothing. Either way the running version is recorded.
 
 The text comes from `CHANGELOG.md`, bundled at build time: each `## x.y.z — date` heading, an optional intro line and its `- ` bullets, with Markdown emphasis, code and links reduced to plain text and anything under a `###` subheading (e.g. "### Developer") skipped.
 
@@ -108,4 +112,4 @@ Cream and banana yellow, light and dark themes, a faint pattern of scattered ban
 
 ## Stack
 
-Vite + vanilla ES modules, `vite-plugin-pwa` (generateSW, autoUpdate), Vitest + jsdom, sharp for icons. GitHub Pages via Actions with `BASE_PATH=/<repo>/`. Test-first: pure logic in `src/lib` (no DOM), DOM in `src/ui`, build checks against `dist/`.
+Vite + vanilla ES modules, `vite-plugin-pwa` (generateSW, `registerType: 'prompt'`; see Updates), Vitest + jsdom, sharp for icons. GitHub Pages via Actions with `BASE_PATH=/<repo>/`. Test-first: pure logic in `src/lib` (no DOM), DOM in `src/ui`, build checks against `dist/`.

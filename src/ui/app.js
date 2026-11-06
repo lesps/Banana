@@ -57,10 +57,12 @@ export function mountApp(root, {
     persisted: null,
     install: { ...env, canPrompt: false },
     version,
+    updateReady: false,
     lookup: { query: '', status: 'idle' }, // idle | loading | ready | error
     plate: sanitizePlate(storage.get(KEYS.plate, [])), // a device-only draft, never in backups
   };
   let foodIndex = null;
+  let applyUpdate = null;
   let destroyed = false;
   let draft = '';
   let pop = null; // { day, from }: one-shot, so the next render animates what was just logged
@@ -183,6 +185,14 @@ export function mountApp(root, {
     setRollover: (hour) => commitSettings({ rolloverHour: Number(hour) }),
     showMore: () => set({ historyLimit: state.historyLimit + PAGE }),
     setPersisted: (persisted) => set({ persisted }),
+
+    // main.js calls this when a new version has downloaded in the background. It's applied on the
+    // next launch; restart() applies it now (the page reloads into the new version).
+    setUpdateReady(restart) {
+      applyUpdate = restart;
+      set({ updateReady: true });
+    },
+    applyUpdate: () => applyUpdate?.(),
 
     async exportBackup() {
       const text = JSON.stringify(exportData(state.entries, state.settings, now()));

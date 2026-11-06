@@ -9,7 +9,8 @@ const app = mountApp(document.getElementById('app'));
 
 navigator.storage?.persist?.().then((granted) => app.actions.setPersisted(granted), () => {});
 
-registerSW({
+const updateSW = registerSW({
   immediate: true,
   onOfflineReady: () => toast('Ready to work offline.'),
+  onNeedRefresh: () => app.actions.setUpdateReady(() => updateSW(true)),
 });

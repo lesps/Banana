@@ -2,6 +2,14 @@
 
 Each release's bullets are shown in the app's "What's new" note, so they're written for the person using Banana. Notes for developers go under a "### Developer" heading, which the app skips.
 
+## 1.8.0 — 2026-11-05
+
+- Updates download quietly in the background and switch over the next time you open Banana, never while you're using it. When one is waiting, Settings says "Update ready" and offers Restart now if you'd like it straight away.
+
+### Developer
+
+- `vite-plugin-pwa` now runs with `registerType: 'prompt'`; `src/main.js` hands the restart function to `actions.setUpdateReady`.
+
 ## 1.7.1 — 2026-11-04
 
 - The What's new note has a ✕ in its top corner, so you can close it without scrolling to the bottom.

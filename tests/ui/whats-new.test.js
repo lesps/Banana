@@ -109,3 +109,22 @@ describe('What’s new', () => {
     expect(earlier()).toEqual(['1.5.0', '1.4.0']);
   });
 });
+
+describe('Update ready', () => {
+  it('says nothing until an update has downloaded', () => {
+    const t = mount();
+    t.tab('settings');
+    expect(t.$('.update-ready')).toBeNull();
+  });
+
+  it('offers to restart into a downloaded update, which waits for the next launch otherwise', () => {
+    const t = mount();
+    const applied = [];
+    t.app.actions.setUpdateReady(() => applied.push(1));
+    expect(applied).toHaveLength(0);
+    t.tab('settings');
+    expect(t.$('.update-ready').textContent).toMatch(/^Update ready/);
+    t.button('Restart now').click();
+    expect(applied).toHaveLength(1);
+  });
+});

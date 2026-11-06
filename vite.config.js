@@ -7,7 +7,9 @@ export default defineConfig({
   base,
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
+      // New versions download in the background and wait; they take over on the next launch
+      // (or when "Restart now" in Settings asks them to), never by reloading the app mid-use.
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {

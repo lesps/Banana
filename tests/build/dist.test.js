@@ -72,6 +72,12 @@ describe('service worker', () => {
     expect(sw).toMatch(/\.woff2/);
   });
 
+  it('only takes over early when asked (Restart now); never skips waiting on its own', () => {
+    expect(sw).toMatch(/SKIP_WAITING/);
+    expect(sw).not.toMatch(/self\.skipWaiting\(\)\s*[,;]\s*(\w+\.)?clientsClaim\(\)/);
+    expect(sw.match(/skipWaiting\(\)/g)).toHaveLength(1);
+  });
+
   it('precaches the food list chunk, so Look up works offline', () => {
     const chunk = walk(join(dist, 'assets')).find((f) => f.endsWith('.js') && readFileSync(f, 'utf8').includes('Bagel, wheat'));
     expect(sw).toContain(chunk.slice(dist.length));
