@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { splashLinks } from './scripts/splash.js';
 
 const base = process.env.BASE_PATH || '/';
 
 export default defineConfig({
   base,
   plugins: [
+    { name: 'ios-launch-screens', transformIndexHtml: () => splashLinks(base) },
     VitePWA({
       // New versions download in the background and wait; they take over on the next launch
       // (or when "Restart now" in Settings asks them to), never by reloading the app mid-use.
@@ -30,6 +32,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        globIgnores: ['splash/**'], // iOS reads launch screens only when the app is added
         cleanupOutdatedCaches: true,
       },
     }),

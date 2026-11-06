@@ -108,6 +108,8 @@ SR Legacy, Foundation and Branded foods were evaluated and left out: SR Legacy i
 
 ## Look
 
+**Launch screen (iPhone):** while a Home Screen web app starts, iOS shows plain white unless there's a launch image for that exact screen. Banana has one for every iPhone screen size, portrait, light and dark (dark when the phone is in dark mode): the smiling banana with a soft shadow on the app's background. iOS reads them only when the app is added to the Home Screen, so an install from before 1.9.0 has to be removed and added again to get one. They aren't part of the offline download.
+
 Cream and banana yellow, light and dark themes, a faint pattern of scattered banana silhouettes behind the page. Bananas are drawn from one inline SVG sprite: shaded peel, a ridge, a highlight, a green-tinged neck, a stem and a dark tip. A whole banana; a half is the stem half cut open (pale flesh showing) over an empty outline; an empty banana is the outline alone. Past the target they go overripe: deeper yellow with brown spots. The quick buttons use one-colour versions; the empty states show a big banana with a smiling face that sways gently.
 
 ## Stack

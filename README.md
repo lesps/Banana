@@ -19,7 +19,7 @@ Log food in bananas. One banana is about 100 calories, so a latte is "1", a burr
 
 Everything stays on your device in the browser's storage. Nothing is sent anywhere. That also means the app's storage is the only copy, so:
 
-- **Install the app** (Settings → Install app, or Safari's Share → Add to Home Screen). Browsers can clear storage for sites you haven't installed; Safari does it after seven days of browsing without a visit.
+- **Install the app** (Settings → Install app, or Safari's Share → Add to Home Screen). Browsers can clear storage for sites you haven't installed; Safari does it after seven days of browsing without a visit. On iPhone a smiling banana shows while the app starts; iOS only picks that launch screen up when the app is added, so if you added Banana before version 1.9, export a backup, remove it from the Home Screen, add it again and import the backup.
 - **Export a backup now and then.** A dot on the Settings tab means you have changes that haven't been backed up for a week or more.
 
 **Merging** a backup keeps the newest version of every entry, so importing an old backup never undoes edits or brings back deleted entries, and importing the same file twice changes nothing. **Replace everything** makes your data exactly the file's (it asks twice).
@@ -51,7 +51,7 @@ npm ci
 npm test                              # unit + UI tests
 npm run build && npm run test:build   # build, then check dist/
 npm run dev                           # http://localhost:5173/
-npm run icons                         # regenerate icons from assets/icon.svg
+npm run icons                         # regenerate icons from assets/icon.svg, and the iOS launch screens
 npm run foods -- surveyDownload.json  # regenerate the food list
 ```
 
