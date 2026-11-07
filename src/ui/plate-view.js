@@ -43,16 +43,19 @@ const labelText = (part, i) => {
   return t.length > LABEL_MAX ? `${t.slice(0, LABEL_MAX - 1).trimEnd()}…` : t;
 };
 
+let made = 0; // each drawing gets its own shadow filter id, since several can be on screen at once
+
 const canAnimate = () => typeof requestAnimationFrame === 'function' && typeof matchMedia === 'function'
   && !matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function createPlateView(initial, { onSelect }) {
+  const shadow = `piece-shadow-${++made}`;
   const wedgeLayer = svg('g', { class: 'wedges' });
   const dividerLayer = svg('g', { class: 'dividers' });
   const pieceLayer = svg('g', { class: 'pieces' });
   const labelLayer = svg('g', { class: 'labels' });
   const base = [
-    svg('defs', {}, svg('filter', { id: 'piece-shadow', x: '-30%', y: '-30%', width: '160%', height: '160%' },
+    svg('defs', {}, svg('filter', { id: shadow, x: '-30%', y: '-30%', width: '160%', height: '160%' },
       svg('feDropShadow', { class: 'piece-shadow', dx: '0.5', dy: '1.5', stdDeviation: '1.1' }))),
     svg('ellipse', { class: 'plate-shadow', cx: CX, cy: CY + DEPTH + 4, rx: RIM * S + 3, ry: (RIM * S + 3) * K }),
     svg('ellipse', { class: 'plate-edge', cx: CX, cy: CY + DEPTH, rx: RIM * S, ry: RIM * S * K }),
@@ -80,7 +83,7 @@ export function createPlateView(initial, { onSelect }) {
 
   function makeBody(piece) {
     const use = svg('use', { href: `#${piece.kind === 'half' ? 'banana-half' : 'banana'}` });
-    const g = svg('g', { class: 'piece', filter: 'url(#piece-shadow)' }, use);
+    const g = svg('g', { class: 'piece', filter: `url(#${shadow})` }, use);
     return { key: piece.key, g, use, x: 0, y: 0, z: 0, rot: 0, size: 0, vx: 0, vy: 0, vz: 0, vrot: 0, falling: false, dropOrder: 0, drawnSize: 0 };
   }
 

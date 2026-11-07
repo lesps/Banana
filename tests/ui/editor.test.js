@@ -62,6 +62,38 @@ describe('editor', () => {
     expect(t.entries()).toEqual([['Toast', '1']]);
   });
 
+  it('shows the entry on a plate that follows the amount', () => {
+    const t = setup();
+    const art = t.dlg.querySelector('.plate-art');
+    expect(art.getAttribute('aria-hidden')).toBe('true');
+    const pieces = () => [...art.querySelectorAll('.piece use')].map((u) => u.getAttribute('href'));
+    expect(pieces()).toEqual(['#banana']);
+    expect(art.querySelectorAll('.piece.drop')).toHaveLength(0); // already on the plate when it opens
+    const plus = t.dlg.querySelector('.stepper .plus');
+    plus.click();
+    expect(pieces().sort()).toEqual(['#banana', '#banana-half']);
+    expect([...art.querySelectorAll('.piece.drop use')].map((u) => u.getAttribute('href'))).toEqual(['#banana-half']);
+    plus.click();
+    expect(pieces()).toEqual(['#banana', '#banana']);
+    t.dlg.querySelector('.stepper .minus').click();
+    t.dlg.querySelector('.stepper .minus').click();
+    t.dlg.querySelector('.stepper .minus').click();
+    expect(pieces()).toEqual(['#banana-half']);
+  });
+
+  it('gives each plate drawing its own shadow, so two on screen don’t share one', () => {
+    const t = setup();
+    t.quick('1').click(); // the plate on Today
+    t.$('.entries .entry').click();
+    const ids = t.$$('filter').map((f) => f.id);
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+    for (const art of t.$$('.plate-art')) {
+      const id = art.querySelector('filter').id;
+      expect([...art.querySelectorAll('.piece')].every((g) => g.getAttribute('filter') === `url(#${id})`)).toBe(true);
+    }
+  });
+
   it('deletes with undo', () => {
     const t = setup();
     t.button('Delete', t.dlg).click();

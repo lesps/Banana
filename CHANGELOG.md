@@ -2,6 +2,11 @@
 
 Each release's bullets are shown in the app's "What's new" note, so they're written for the person using Banana. Notes for developers go under a "### Developer" heading, which the app skips.
 
+## 1.11.0 — 2026-11-07
+
+- Editing an entry shows it on a little plate, and the bananas drop on or come off as you change the amount.
+- Editing a meal shows the whole meal on its plate, a wedge per part, keeping up as you change amounts, rename or take parts out. Tap a wedge to find its part in the list.
+
 ## 1.10.0 — 2026-11-07
 
 - Build meals on your plate. **+ Part** starts a new section, and the amount buttons add to whichever part you've picked: tap its chip under the plate, or its wedge on the plate. Recent chips, Again and Look up each add their own part, named after the food. Tap the part you're on to rename it, change it or take it off.

@@ -222,6 +222,37 @@ describe('Meals in the log', () => {
     expect(t.app.state().entries.find((e) => e.label === 'Salad').deleted).toBe(true);
   });
 
+  it('shows the meal on a plate, a wedge per part, following the changes', () => {
+    const t = mount();
+    logDinner(t);
+    const dlg = open(t);
+    const art = dlg.querySelector('.plate-art');
+    const labels = () => [...art.querySelectorAll('.wedge-label')].map((l) => l.textContent);
+    expect(labels()).toEqual(['RICE', 'CHICKEN', 'SALAD']);
+    expect(art.querySelectorAll('.piece')).toHaveLength(6);
+    expect(art.querySelectorAll('.piece.drop')).toHaveLength(0);
+    const [rice, chicken, salad] = dlg.querySelectorAll('.meal-part');
+    t.type(rice.querySelector('input'), 'Brown rice');
+    expect(labels()[0]).toBe('BROWN RICE');
+    chicken.querySelector('.plus').click();
+    expect(art.querySelectorAll('.piece')).toHaveLength(7);
+    expect(art.querySelectorAll('.piece.drop')).toHaveLength(1);
+    salad.querySelector('.part-remove').click();
+    expect(labels()).toEqual(['BROWN RICE', 'CHICKEN']);
+    expect(art.querySelectorAll('.piece')).toHaveLength(6);
+  });
+
+  it('tapping a wedge on the meal’s plate points out that part', () => {
+    const t = mount();
+    logDinner(t);
+    const dlg = open(t);
+    dlg.querySelector('.plate-art .wedge[data-part="1"]').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect([...dlg.querySelectorAll('.meal-part')].map((r) => r.classList.contains('active'))).toEqual([false, true, false]);
+    expect(dlg.querySelector('.plate-art .wedge.active').dataset.part).toBe('1');
+    dlg.querySelectorAll('.meal-part')[2].querySelector('.plus').click();
+    expect(dlg.querySelector('.plate-art .wedge.active').dataset.part).toBe('2');
+  });
+
   it('won’t remove the last part (that’s Delete meal)', () => {
     const t = mount();
     logDinner(t);

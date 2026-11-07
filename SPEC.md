@@ -51,11 +51,11 @@ Bottom tabs: **Today**, **Look up**, **History**, **Settings**. Tapping Today al
 
 ### Editor (dialog)
 
-Amount stepper (− / value / +, ½ steps, min ½), label, day (date input, no future dates), **Save**, **Delete**, **Cancel**. Delete closes the dialog and shows `Deleted · Undo`.
+The entry on a small plate (the same drawing as the Today plate, one part), then the amount stepper (− / value / +, ½ steps, min ½), label, day (date input, no future dates), **Save**, **Delete**, **Cancel**. The plate follows the stepper: a step up drops the new banana or half on, a step down takes one off. Nothing is drawn as dropping when the dialog opens. Delete closes the dialog and shows `Deleted · Undo`.
 
 ### Meal editor (dialog)
 
-"Edit meal" (focus starts on the heading, so the keyboard doesn't pop up): the meal's name, each part as a name field, a compact amount stepper (min ½) and **✕** (takes the part out; disabled on the last one), the day (no future dates), **Delete meal**, **Cancel**, **Save**. Nothing changes until Save, which deletes the parts taken out and writes every other part's name, amount, the meal's name and the day. Delete meal deletes every part and shows `Deleted · Undo`.
+"Edit meal" (focus starts on the heading, so the keyboard doesn't pop up), the meal on a small plate with a wedge per part, then the meal's name, each part as a name field, a compact amount stepper (min ½) and **✕** (takes the part out; disabled on the last one), the day (no future dates), **Delete meal**, **Cancel**, **Save**. The plate follows the edits as they're made (amounts, names on the rim, parts taken out). Tapping a wedge highlights it and its part's row; stepping a part's amount does the same. Nothing changes until Save, which deletes the parts taken out and writes every other part's name, amount, the meal's name and the day. Delete meal deletes every part and shows `Deleted · Undo`.
 
 ### Look up
 
