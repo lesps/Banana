@@ -9,10 +9,17 @@ import { renderHistory } from './history.js';
 import { renderLookup } from './lookup.js';
 import { renderSettings } from './settings.js';
 import { openEditor } from './editor.js';
-import { dayOf, addDays } from '../lib/day.js';
-import { formatHalves, countEntries } from '../lib/units.js';
-import { createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue, cleanLabel, MAX_LABEL } from '../lib/log.js';
-import { addToPlate, undoPlate, plateTotal, plateLabel, sanitizePlate } from '../lib/plate.js';
+import { openPartEditor, openMealEditor } from './meal-editor.js';
+import { createPlateView } from './plate-view.js';
+import { dayOf, addDays, isDay } from '../lib/day.js';
+import { formatHalves, countEntries, MAX_HALVES } from '../lib/units.js';
+import {
+  createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, dayTotal, backupDue, cleanLabel, newId, mealParts, dayRows,
+} from '../lib/log.js';
+import {
+  EMPTY_PLATE, MAX_PARTS, addAmount, addPart, newPart, selectPart, undoPlate, removePart, updatePart, plateTotal, partHalves,
+  partName, filledParts, sanitizePlate,
+} from '../lib/plate.js';
 import { exportData, backupFilename, parseBackup, mergeBackup, validEntry } from '../lib/backup.js';
 import { sanitizeSettings } from '../lib/settings.js';
 import { prepareFoods } from '../lib/foods.js';
@@ -59,15 +66,16 @@ export function mountApp(root, {
     version,
     updateReady: false,
     lookup: { query: '', status: 'idle' }, // idle | loading | ready | error
-    plate: sanitizePlate(storage.get(KEYS.plate, [])), // a device-only draft, never in backups
+    plate: sanitizePlate(storage.get(KEYS.plate, null)), // a device-only draft, never in backups
   };
   let foodIndex = null;
   let applyUpdate = null;
   let destroyed = false;
   let draft = '';
   let pop = null; // { day, from }: one-shot, so the next render animates what was just logged
-  let dropFrom = null; // one-shot: index of the first plate item added since the last render
   let deferredPrompt = null;
+  // The plate drawing lives across renders (its bananas animate between them).
+  const plateView = createPlateView(state.plate, { onSelect: (i) => actions.selectPart(i) });
 
   const today = () => dayOf(now(), state.settings.rolloverHour);
   const shownDay = () => state.day ?? today();
@@ -87,6 +95,34 @@ export function mountApp(root, {
   function savePlate(plate, patch = {}) {
     storage.set(KEYS.plate, plate);
     set({ plate, ...patch });
+  }
+
+  const MANY_PARTS = `A meal holds up to ${MAX_PARTS} parts.`;
+  const limitMessage = (halves) => (plateTotal(state.plate) + halves > MAX_HALVES ? `A plate holds up to ${MAX_HALVES / 2} bananas.` : MANY_PARTS);
+
+  // Saves the plate an action produced, or says why there wasn't one.
+  function putOnPlate(plate, halves, patch = {}) {
+    if (!plate) {
+      toast(limitMessage(halves));
+      return false;
+    }
+    savePlate(plate, patch);
+    return true;
+  }
+
+  function logMeal(parts, name) {
+    const day = shownDay();
+    const t = now();
+    const meal = { id: newId(), name };
+    const created = parts.map((p) => createEntry({ halves: p.halves, label: p.label, day, now: t, meal }));
+    pop = { day, from: dayTotal(state.entries, day) };
+    if (commit([...state.entries, ...created])) {
+      const total = created.reduce((n, e) => n + e.halves, 0);
+      toast(`Logged ${formatHalves(total)}${name ? ` · ${name}` : ''}`, {
+        action: 'Undo',
+        onAction: () => commit(created.reduce((es, e) => deleteEntry(es, e.id, now()), state.entries)),
+      });
+    }
   }
 
   function commitSettings(patch) {
@@ -117,35 +153,46 @@ export function mountApp(root, {
     openDay: (day) => set({ view: 'today', day: day && day < today() ? day : null }),
     stepDay: (n) => actions.openDay(addDays(shownDay(), n)),
 
-    addToPlate(halves, label, patch = {}) {
-      const plate = addToPlate(state.plate, halves, label);
-      if (!plate) {
-        toast('A plate holds up to 100 bananas.');
-        return false;
-      }
-      dropFrom = state.plate.length;
-      savePlate(plate, patch);
-      return true;
+    // Quick amounts go into the part being built.
+    addToPlate(halves) {
+      return putOnPlate(addAmount(state.plate, halves), halves);
+    },
+    // A named amount (a recent chip, Again, Look up) starts its own part.
+    addPart(halves, label = '', patch = {}) {
+      return putOnPlate(addPart(state.plate, halves, label), halves, patch);
+    },
+    newPart() {
+      const plate = newPart(state.plate);
+      if (plate) savePlate(plate);
+      else toast(MANY_PARTS);
+    },
+    selectPart: (i) => savePlate(selectPart(state.plate, i)),
+    editPart(i) {
+      const part = state.plate.parts[i];
+      if (!part) return;
+      openPartEditor({ title: partName(part, i), label: part.label ?? '', halves: partHalves(part) }, {
+        onSave: (patch) => putOnPlate(updatePart(state.plate, i, patch), 0),
+        onRemove: () => savePlate(removePart(state.plate, i)),
+      });
     },
     undoPlate: () => savePlate(undoPlate(state.plate)),
-    clearPlate: () => savePlate([]),
+    clearPlate: () => savePlate(EMPTY_PLATE),
 
-    // From Look up: the portion's bananas go on the plate and "Bagel (regular)" goes into the label
-    // field (appended after " + " if there's text already), back on the day being shown.
-    addFromLookup(halves, label) {
-      const before = draft;
-      draft = (draft.trim() ? `${draft.trim()} + ${label}` : label).slice(0, MAX_LABEL);
-      if (!actions.addToPlate(halves, '', { view: 'today' })) draft = before;
-    },
+    // From Look up: the portion goes on the plate as a part named "Bagel (regular)", back on the
+    // day being shown.
+    addFromLookup: (halves, label) => actions.addPart(halves, label, { view: 'today' }),
 
+    // One filled part logs a plain entry (the typed label, else the part's name); several log a meal
+    // named with the typed label, an entry per part.
     logPlate() {
-      const total = plateTotal(state.plate);
-      if (!total) return;
-      const label = cleanLabel(draft) || plateLabel(state.plate);
+      const parts = filledParts(state.plate);
+      if (!parts.length) return;
+      const name = cleanLabel(draft);
       draft = '';
-      storage.set(KEYS.plate, []);
-      state = { ...state, plate: [] };
-      actions.log(total, label);
+      storage.set(KEYS.plate, EMPTY_PLATE);
+      state = { ...state, plate: EMPTY_PLATE };
+      if (parts.length === 1) actions.log(parts[0].halves, name || parts[0].label);
+      else logMeal(parts, name);
     },
 
     log(halves, label = '') {
@@ -157,6 +204,50 @@ export function mountApp(root, {
           onAction: () => commit(deleteEntry(state.entries, entry.id, now())),
         });
       }
+    },
+
+    editMeal(mealId, day) {
+      const meal = dayRows(state.entries, day).find((r) => r.type === 'meal' && r.id === mealId);
+      if (!meal) return;
+      openMealEditor(meal, {
+        today: today(),
+        onSave: (changes) => actions.saveMeal(mealId, day, changes),
+        onDelete: () => actions.removeMeal(mealId, day),
+      });
+    },
+
+    // Every part that stays gets the same name and day, so the meal stays whole after a merge.
+    saveMeal(mealId, day, { name, day: moveTo, parts }) {
+      const t = now();
+      const target = isDay(moveTo) && moveTo <= today() ? moveTo : day;
+      const entries = parts.reduce((es, p) => (p.removed
+        ? deleteEntry(es, p.id, t)
+        : updateEntry(es, p.id, { halves: p.halves, label: p.label, day: target, mealName: name }, t)), state.entries);
+      commit(entries);
+    },
+
+    removeMeal(mealId, day) {
+      const ids = mealParts(state.entries, mealId, day).map((e) => e.id);
+      if (!ids.length) return;
+      if (commit(ids.reduce((es, id) => deleteEntry(es, id, now()), state.entries))) {
+        toast('Deleted', { action: 'Undo', onAction: () => commit(ids.reduce((es, id) => restoreEntry(es, id, now()), state.entries)) });
+      }
+    },
+
+    // Again for a meal: every part back on the plate, and its name in the label field if that's empty.
+    againMeal(mealId, day) {
+      const meal = dayRows(state.entries, day).find((r) => r.type === 'meal' && r.id === mealId);
+      if (!meal) return;
+      let plate = state.plate;
+      for (const p of meal.parts) {
+        plate = plate && addPart(plate, p.halves, p.label);
+      }
+      if (!plate) {
+        toast(limitMessage(meal.halves));
+        return;
+      }
+      if (!draft.trim()) draft = meal.name;
+      savePlate(plate);
     },
 
     edit(id) {
@@ -265,9 +356,8 @@ export function mountApp(root, {
     const active = document.activeElement;
     const focusKey = root.contains(active) ? active.dataset.focus : undefined;
     const sel = focusKey && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
-    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, pop, dropFrom, foodIndex, actions };
+    const ctx = { state, today: today(), day: shownDay(), draft, setDraft: (v) => { draft = v; }, pop, plateView, foodIndex, actions };
     pop = null;
-    dropFrom = null;
     root.replaceChildren(h('main', { class: `view view-${state.view}` }, VIEWS[state.view](ctx)), tabs());
     lastToday = ctx.today;
     if (focusKey) {
@@ -314,6 +404,7 @@ export function mountApp(root, {
     destroy() {
       destroyed = true;
       clearInterval(timer);
+      plateView.destroy();
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);

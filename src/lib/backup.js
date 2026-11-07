@@ -4,7 +4,7 @@ import { MAX_LABEL, live } from './log.js';
 import { DEFAULT_SETTINGS, sanitizeSettings } from './settings.js';
 
 export const FORMAT = 'banana-log';
-export const VERSION = 1;
+export const VERSION = 2; // 2 added entries' optional `meal`; version 1 files still import
 
 export function exportData(entries, settings, now) {
   return { format: FORMAT, version: VERSION, exported: new Date(now).toISOString(), settings, entries };
@@ -23,7 +23,17 @@ export function validEntry(e) {
   if (typeof label !== 'string') return null;
   const out = { id, day, ts, halves, label: label.trim().slice(0, MAX_LABEL), updatedAt };
   if (deleted === true) out.deleted = true;
+  const meal = validMeal(e.meal);
+  if (meal) out.meal = meal;
   return out;
+}
+
+// A malformed meal is dropped; the entry itself is still good.
+function validMeal(m) {
+  if (!m || typeof m !== 'object') return null;
+  const { id, name = '' } = m;
+  if (typeof id !== 'string' || !id || id.length > 100 || typeof name !== 'string') return null;
+  return { id, name: name.trim().slice(0, MAX_LABEL) };
 }
 
 export function parseBackup(text) {
@@ -34,7 +44,7 @@ export function parseBackup(text) {
     return { ok: false, error: 'This file isn’t valid JSON.' };
   }
   if (!data || data.format !== FORMAT) return { ok: false, error: 'This isn’t a Banana backup file.' };
-  if (data.version !== VERSION) return { ok: false, error: `Unsupported backup version (${data.version}).` };
+  if (data.version !== 1 && data.version !== VERSION) return { ok: false, error: `Unsupported backup version (${data.version}).` };
   if (!Array.isArray(data.entries)) return { ok: false, error: 'The backup has no entries list.' };
 
   const byId = new Map();

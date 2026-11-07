@@ -88,7 +88,7 @@ describe('Look up', () => {
     expect(t.$('.no-results').textContent).toBe('No match for “zzz”. Try a simpler word.');
   });
 
-  it('tapping a portion puts its bananas on the plate and goes back to the day, logging nothing', async () => {
+  it('tapping a portion puts it on the plate as its own part and goes back to the day, logging nothing', async () => {
     const t = mount();
     t.type('#label', 'Breakfast');
     t.quick('1').click();
@@ -102,45 +102,36 @@ describe('Look up', () => {
     expect(t.$('.tabs button[data-view="today"]').getAttribute('aria-current')).toBe('page');
     expect(t.heading()).toBe('Yesterday');
     expect(t.plate().querySelector('.plate-sum').textContent).toBe('1 + 2½ = 3½');
-    expect(t.$('#label').value).toBe('Breakfast + Bagel (regular)');
+    expect(t.$$('.part-chip').map((c) => `${c.querySelector('.part-name').textContent} ${c.querySelector('.part-amount').textContent}`))
+      .toEqual(['Part 1 1', 'Bagel (regular) 2½']);
+    expect(t.$('#label').value).toBe('Breakfast');
     expect(t.app.state().entries).toEqual([]);
-    expect(t.app.state().plate).toEqual([{ halves: 2 }, { halves: 5 }]);
     expect(t.$$('.piece.drop')).toHaveLength(3); // the bagel's 2½ bananas drop onto the plate
   });
 
-  it('prefills “What was it?” with the food and portion, which you can still edit before logging', async () => {
-    const t = await open();
-    search(t, 'latte');
-    t.$$('.portion-add').find((b) => b.querySelector('.p-label').textContent === 'large').click();
-    expect(t.$('#label').value).toBe('Coffee, Latte (large)');
-    t.tab('lookup');
-    search(t, 'bagel');
-    t.$$('.portion-add')[0].click();
-    expect(t.$('#label').value).toBe('Coffee, Latte (large) + Bagel (mini)');
-    t.type('#label', 'Breakfast');
-    t.plate().querySelector('.log').click();
-    expect(t.entries()).toEqual([['Breakfast', '3']]);
-  });
-
-  it('logs the prefilled label as is', async () => {
+  it('names the part after the food and portion, and logs a lone one under that name', async () => {
     const t = await open();
     search(t, 'burrito');
     t.$$('.portion-add')[0].click();
+    expect(t.$('.part-chip.active .part-name').textContent).toBe('Burrito (small/regular)');
     t.plate().querySelector('.log').click();
     expect(t.entries()).toEqual([['Burrito (small/regular)', '5']]);
   });
 
-  it('keeps the prefilled label within 200 characters', async () => {
+  it('adds each portion as a part of one meal', async () => {
     const t = await open();
-    t.tab('today');
-    t.type('#label', 'x'.repeat(195));
+    search(t, 'latte');
+    t.$$('.portion-add').find((b) => b.querySelector('.p-label').textContent === 'large').click();
     t.tab('lookup');
     search(t, 'bagel');
     t.$$('.portion-add')[0].click();
-    expect(t.$('#label').value).toHaveLength(200);
+    t.type('#label', 'Breakfast');
+    t.plate().querySelector('.log').click();
+    expect(t.entries()).toEqual([['Breakfast', '3']]);
+    expect(t.$('.entries .meal .parts').textContent).toBe('Coffee, Latte (large) 2½ · Bagel (mini) ½');
   });
 
-  it('leaves the label alone when the plate is full', async () => {
+  it('says so when the plate is full', async () => {
     const t = await open();
     t.tab('today');
     for (let i = 0; i < 33; i++) t.quick('3').click();
@@ -148,8 +139,7 @@ describe('Look up', () => {
     search(t, 'burrito');
     t.$$('.portion-add')[0].click();
     expect(t.toast().textContent).toBe('A plate holds up to 100 bananas.');
-    t.tab('today');
-    expect(t.$('#label').value).toBe('');
+    expect(t.app.state().plate.parts).toHaveLength(1);
   });
 
   it('can’t add a portion that rounds to nothing', async () => {

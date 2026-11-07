@@ -6,11 +6,12 @@ Log food in bananas. One banana is about 100 calories, so a latte is "1", a burr
 
 ## Features
 
-- **Today**: your total in big numbers and a row of bananas against an optional daily target ("of 20 · 14½ left"); anything past the target goes overripe. Tap `½ 1 1½ 2 3` to add bananas to your plate, as many as a meal needs, watch them pile up on a little plate, then **Log** them as one entry; you see where the plate lands against your target before you commit. Type what it was if you like. Recent foods sit in a row of chips you can add again. Every log can be undone.
-- **Edit and delete**: tap any entry to change its amount, label or day, or delete it (with Undo). Or swipe: left to delete, right to put the same amount back on your plate ("Again").
+- **Today**: your total in big numbers and a row of bananas against an optional daily target ("of 20 · 14½ left"); anything past the target goes overripe. Tap `½ 1 1½ 2 3` to add bananas to your plate, as many as you need, then **Log** them; you see where the plate lands against your target before you commit. Type what it was if you like. Recent foods sit in a row of chips you can add again. Every log can be undone.
+- **Meals**: **+ Part** splits the plate into sections like a pie chart, a wedge per part sized by its bananas: rice 2, chicken 3, salad 1. The buttons add to the part you've picked (tap its chip or its wedge); recent chips and Look up add their own named part; tap a part to rename it, change it or take it off. Bananas drop onto the plate, bounce and heap up in their wedge. Log saves it as one meal in your day, with its parts underneath; tap it to change any of it.
+- **Edit and delete**: tap any entry to change its amount, label or day, or delete it (with Undo). Or swipe: left to delete, right to put it back on your plate ("Again"). Meals swipe as a whole.
 - **Past days**: step back with `‹` to see or fill in an earlier day.
 - **Late nights count toward the day before**: a new day starts at 4 a.m. by default (Settings → New day starts at). Each entry's day is fixed when you log it, so changing this later doesn't move anything.
-- **Look up**: search about 5,200 everyday foods (bagel, burrito, latte, pad thai, Big Mac…) and see each portion in bananas, so you can estimate before you log. Tap a portion to put its bananas on your plate and its name in "What was it?" (e.g. "Bagel (regular)"), then adjust either before logging. Works offline.
+- **Look up**: search about 5,200 everyday foods (bagel, burrito, latte, pad thai, Big Mac…) and see each portion in bananas, so you can estimate before you log. Tap a portion to put it on your plate as a part named after it (e.g. "Bagel (regular)"), then adjust it before logging. Works offline.
 - **History**: the last 14 days as bars with your target line, the average of the days you logged this past week, and every logged day with its total.
 - **What's new**: after each update, a little note says what changed (also in Settings → What's new).
 - **Backup**: Settings → Export backup shares or downloads a JSON file. Import shows what the file contains and what it would change before you merge it or replace everything.
@@ -29,16 +30,17 @@ Everything stays on your device in the browser's storage. Nothing is sent anywhe
 ```json
 {
   "format": "banana-log",
-  "version": 1,
+  "version": 2,
   "exported": "2026-11-03T13:00:00.000Z",
   "settings": { "targetHalves": 40, "rolloverHour": 4, "updatedAt": 1762174800000 },
   "entries": [
-    { "id": "…", "day": "2026-11-03", "ts": 1762174800000, "halves": 3, "label": "Latte", "updatedAt": 1762174800000 }
+    { "id": "…", "day": "2026-11-03", "ts": 1762174800000, "halves": 3, "label": "Latte", "updatedAt": 1762174800000 },
+    { "id": "…", "day": "2026-11-03", "ts": 1762196400000, "halves": 4, "label": "Rice", "updatedAt": 1762196400000, "meal": { "id": "…", "name": "Dinner" } }
   ]
 }
 ```
 
-Amounts are in half-bananas (`halves: 3` = 1½ bananas). Deleted entries appear with `"deleted": true`. Full details in [SPEC.md](SPEC.md).
+Amounts are in half-bananas (`halves: 3` = 1½ bananas). Each part of a meal is its own entry, tied to the others by `meal.id`. Deleted entries appear with `"deleted": true`. Version 1 backups (from before meals) still import; Banana versions before 1.10 can't read version 2. Full details in [SPEC.md](SPEC.md).
 
 ## Food data
 

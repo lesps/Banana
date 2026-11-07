@@ -9,8 +9,13 @@ export const cleanLabel = (s) => (typeof s === 'string' ? s.trim().slice(0, MAX_
 const newId = () =>
   globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 
-export function createEntry({ halves, label = '', day, now, id = newId() }) {
-  return { id, day, ts: now, halves: clampHalves(halves), label: cleanLabel(label), updatedAt: now };
+export { newId };
+
+// meal: { id, name } when the entry is one part of a meal logged from a plate with several parts.
+export function createEntry({ halves, label = '', day, now, id = newId(), meal }) {
+  const e = { id, day, ts: now, halves: clampHalves(halves), label: cleanLabel(label), updatedAt: now };
+  if (meal) e.meal = { id: meal.id, name: cleanLabel(meal.name) };
+  return e;
 }
 
 export const addEntry = (entries, entry) => [...entries, entry];
@@ -23,6 +28,7 @@ export function updateEntry(entries, id, patch, now) {
     if ('halves' in patch) next.halves = clampHalves(patch.halves);
     if ('label' in patch) next.label = cleanLabel(patch.label);
     if (isDay(patch.day)) next.day = patch.day;
+    if ('mealName' in patch && e.meal) next.meal = { ...e.meal, name: cleanLabel(patch.mealName) };
     return next;
   });
 }
@@ -39,16 +45,50 @@ export const entriesForDay = (entries, day) => live(entries).filter((e) => e.day
 
 export const dayTotal = (entries, day) => entriesForDay(entries, day).reduce((n, e) => n + e.halves, 0);
 
+// count is the number of rows the day shows: a meal counts once.
 export function daySummaries(entries) {
   const byDay = new Map();
   for (const e of live(entries)) {
-    const s = byDay.get(e.day) ?? { day: e.day, halves: 0, count: 0 };
+    const s = byDay.get(e.day) ?? { day: e.day, halves: 0, count: 0, meals: new Set() };
     s.halves += e.halves;
-    s.count += 1;
+    if (!e.meal) s.count += 1;
+    else if (!s.meals.has(e.meal.id)) {
+      s.meals.add(e.meal.id);
+      s.count += 1;
+    }
     byDay.set(e.day, s);
   }
-  return [...byDay.values()].sort((a, b) => (a.day < b.day ? 1 : -1));
+  return [...byDay.values()].map(({ meals, ...s }) => s).sort((a, b) => (a.day < b.day ? 1 : -1));
 }
+
+// What a day lists: plain entries, and one row per meal (its live parts that day), in the order
+// they were logged. A meal's name comes from its most recently changed part, so a rename on one
+// device and an edit on another still agree after a merge.
+export function dayRows(entries, day) {
+  const rows = [];
+  const meals = new Map();
+  for (const e of entriesForDay(entries, day)) {
+    if (!e.meal) {
+      rows.push({ type: 'entry', entry: e });
+      continue;
+    }
+    let row = meals.get(e.meal.id);
+    if (!row) {
+      row = { type: 'meal', id: e.meal.id, name: e.meal.name, day, ts: e.ts, halves: 0, parts: [], newest: -Infinity };
+      meals.set(e.meal.id, row);
+      rows.push(row);
+    }
+    row.parts.push(e);
+    row.halves += e.halves;
+    if (e.updatedAt > row.newest) {
+      row.newest = e.updatedAt;
+      row.name = e.meal.name;
+    }
+  }
+  return rows.map(({ newest, ...r }) => r);
+}
+
+export const mealParts = (entries, mealId, day) => entriesForDay(entries, day).filter((e) => e.meal?.id === mealId);
 
 export function recentLabels(entries, limit = 8) {
   const seen = new Set();

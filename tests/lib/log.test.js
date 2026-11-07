@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   createEntry, addEntry, updateEntry, deleteEntry, restoreEntry, live, entriesForDay, dayTotal,
-  recentLabels, series, recentAverage, daySummaries, backupDue,
+  recentLabels, series, recentAverage, daySummaries, backupDue, dayRows, mealParts,
 } from '../../src/lib/log.js';
 
 const DAY = 86_400_000;
@@ -21,6 +21,11 @@ describe('createEntry', () => {
   });
   it('generates an id when none is given', () => {
     expect(createEntry({ halves: 2, day: '2026-11-03', now: 1 }).id).toMatch(/\w{8,}/);
+  });
+  it('can belong to a meal, whose name is cleaned like a label', () => {
+    const e = createEntry({ halves: 4, label: 'Rice', day: '2026-11-03', now: 1, id: 'a', meal: { id: 'm1', name: '  Dinner ' } });
+    expect(e.meal).toEqual({ id: 'm1', name: 'Dinner' });
+    expect(createEntry({ halves: 4, day: '2026-11-03', now: 1, meal: { id: 'm1' } }).meal).toEqual({ id: 'm1', name: '' });
   });
 });
 
@@ -56,6 +61,13 @@ describe('edit, delete, restore', () => {
   });
 
   it('unknown ids are a no-op', () => expect(updateEntry(base, 'missing', { halves: 9 }, 1)).toEqual(base));
+
+  it('updateEntry renames the meal an entry belongs to, and leaves plain entries alone', () => {
+    const parts = [mk('2026-11-03', 2, 'Rice', 1, { meal: { id: 'm', name: 'Dinner' } }), mk('2026-11-03', 2, 'Tea')];
+    const [rice, tea] = parts.reduce((es, e) => updateEntry(es, e.id, { mealName: '  Supper ' }, 9e12), parts);
+    expect(rice.meal).toEqual({ id: 'm', name: 'Supper' });
+    expect(tea.meal).toBeUndefined();
+  });
 });
 
 describe('day views', () => {
@@ -75,11 +87,47 @@ describe('day views', () => {
     expect(dayTotal(entries, '2026-11-01')).toBe(0);
   });
 
+  it('daySummaries counts a meal once, however many parts it has', () => {
+    const meal = { id: 'm', name: 'Dinner' };
+    const withMeal = [...entries, mk('2026-11-02', 2, 'Rice', 60, { meal }), mk('2026-11-02', 3, 'Fish', 61, { meal })];
+    expect(daySummaries(withMeal)[1]).toEqual({ day: '2026-11-02', halves: 9, count: 2 });
+  });
+
   it('daySummaries lists days with entries, newest first', () => {
     expect(daySummaries(entries)).toEqual([
       { day: '2026-11-03', halves: 5, count: 2 },
       { day: '2026-11-02', halves: 4, count: 1 },
     ]);
+  });
+});
+
+describe('meals', () => {
+  const meal = (id, name, updatedAt) => ({ meal: { id, name }, updatedAt });
+  const entries = [
+    mk('2026-11-03', 2, 'Tea', 100),
+    mk('2026-11-03', 4, 'Rice', 200, meal('m1', 'Dinner', 200)),
+    mk('2026-11-03', 6, 'Chicken', 200, meal('m1', 'Supper', 300)), // renamed later elsewhere
+    mk('2026-11-03', 2, 'Salad', 200, { ...meal('m1', 'Dinner', 250), deleted: true }),
+    mk('2026-11-03', 1, 'Cookie', 150),
+    mk('2026-11-02', 3, 'Soup', 50, meal('m2', '', 50)),
+    mk('2026-11-03', 2, 'Gone', 400, { ...meal('m3', 'Lunch', 400), deleted: true }),
+  ];
+
+  it('dayRows lists plain entries and meals in the order they were logged, one row per meal', () => {
+    const rows = dayRows(entries, '2026-11-03');
+    expect(rows.map((r) => (r.type === 'meal' ? `${r.name}: ${r.parts.map((p) => p.label).join(', ')}` : r.entry.label)))
+      .toEqual(['Tea', 'Cookie', 'Supper: Rice, Chicken']);
+    expect(rows[2]).toMatchObject({ type: 'meal', id: 'm1', day: '2026-11-03', ts: 200, halves: 10 });
+  });
+
+  it('dayRows names a meal after its most recently changed part, and skips meals with nothing left', () => {
+    expect(dayRows(entries, '2026-11-03').find((r) => r.type === 'meal').name).toBe('Supper');
+    expect(dayRows(entries, '2026-11-02')).toMatchObject([{ type: 'meal', id: 'm2', name: '', halves: 3 }]);
+  });
+
+  it('mealParts lists a meal’s live parts on a day, in order', () => {
+    expect(mealParts(entries, 'm1', '2026-11-03').map((e) => e.label)).toEqual(['Rice', 'Chicken']);
+    expect(mealParts(entries, 'm1', '2026-11-02')).toEqual([]);
   });
 });
 

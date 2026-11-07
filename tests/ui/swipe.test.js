@@ -52,7 +52,7 @@ describe('swiping logged items', () => {
     const t = setup();
     swipe(t.row('Toast'), 200);
     expect(t.plate().querySelector('.plate-sum').textContent).toBe('1½');
-    expect(t.app.state().plate).toEqual([{ halves: 3, label: 'Toast' }]);
+    expect(t.app.state().plate).toEqual({ parts: [{ id: 1, label: 'Toast', amounts: [3] }], active: 0 });
     expect(t.entries()).toHaveLength(2);
   });
 
@@ -73,7 +73,7 @@ describe('swiping logged items', () => {
     swipe(tea, 60);
     expect(tea.classList.contains('open-right')).toBe(true);
     tea.closest('li').querySelector('.swipe-again').click();
-    expect(t.app.state().plate).toEqual([{ halves: 1, label: 'Tea' }]);
+    expect(t.app.state().plate).toEqual({ parts: [{ id: 1, label: 'Tea', amounts: [1] }], active: 0 });
   });
 
   it('tapping an open row closes it instead of opening the editor', () => {

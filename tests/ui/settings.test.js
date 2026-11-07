@@ -52,7 +52,7 @@ describe('Settings: backup', () => {
     expect(t.saved).toHaveLength(1);
     expect(t.saved[0].name).toBe('banana-2026-11-03.json');
     const data = JSON.parse(t.saved[0].text);
-    expect(data).toMatchObject({ format: 'banana-log', version: 1 });
+    expect(data).toMatchObject({ format: 'banana-log', version: 2 });
     expect(data.entries).toHaveLength(1);
     expect(t.$('.last-backup').textContent).toBe('Last backup: today');
   });

@@ -2,6 +2,19 @@
 
 Each release's bullets are shown in the app's "What's new" note, so they're written for the person using Banana. Notes for developers go under a "### Developer" heading, which the app skips.
 
+## 1.10.0 — 2026-11-07
+
+- Build meals on your plate. **+ Part** starts a new section, and the amount buttons add to whichever part you've picked: tap its chip under the plate, or its wedge on the plate. Recent chips, Again and Look up each add their own part, named after the food. Tap the part you're on to rename it, change it or take it off.
+- The plate is now a tilted dish split like a pie chart, a wedge per part sized by its bananas. Bananas drop in, bounce and heap up in their wedge; take a part off and the rest settle into the space.
+- With more than one part, the name field becomes "Name this meal", and Log saves a meal: one row in your day with its parts listed underneath ("Rice 2 · Chicken 3 · Salad 1"). Tap it to rename it, change or remove parts, or move it to another day. Swipe left to delete the whole meal, or right to put all of it back on your plate. A plate with one part logs just as before.
+- Look up adds each portion as its own part named after it, like "Bagel (regular)", instead of filling in the name field.
+- Backups now include meals. Older backups still import; versions of Banana before this one can't read the new ones.
+
+### Developer
+
+- Entries gain an optional `meal: { id, name }`; a meal is ordinary entries sharing `meal.id`. Backup `VERSION` 2 (reads 1). The stored plate is `{ parts, active }`; a pre-1.10 flat plate is read as one part.
+- `src/lib/heap.js` works out wedges and heaps (tested); `src/ui/plate-view.js` draws and animates them and is kept across renders (the animation loop is untested). `src/ui/plate-art.js` is gone.
+
 ## 1.9.0 — 2026-11-05
 
 - On iPhone, a smiling banana now greets you while Banana starts, instead of a blank white screen (on a dark background in dark mode).

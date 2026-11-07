@@ -224,18 +224,15 @@ describe('Today: the plate', () => {
     expect(t.app.state().entries).toEqual([]);
   });
 
-  it('puts recent chips on the plate and names the meal after them', () => {
+  it('puts a recent chip on the plate as a part named after it', () => {
     const t = mount();
     t.type('#label', 'Croissant');
     t.logNow('1½');
-    t.type('#label', 'Latte');
-    t.logNow('1');
     const chip = (name) => t.$$('.recents button').find((b) => b.textContent.startsWith(name));
-    chip('Latte').click();
     chip('Croissant').click();
-    expect(sum(t)).toBe('1 + 1½ = 2½');
+    expect(sum(t)).toBe('1½');
     logBtn(t).click();
-    expect(t.entries().at(-1)).toEqual(['Latte + Croissant', '2½']);
+    expect(t.entries().at(-1)).toEqual(['Croissant', '1½']);
   });
 
   it('prefers a typed label over the chip names', () => {
@@ -291,6 +288,14 @@ describe('Today: the plate', () => {
     expect(sum(t2)).toBe('2 + ½ = 2½');
   });
 
+  it('picks up a plate saved by an older version', () => {
+    const storage = memoryStorage();
+    storage.set('banana:plate:v1', [{ halves: 2, label: 'Latte' }, { halves: 3, label: 'Croissant' }]);
+    const t = mount({ storage });
+    logBtn(t).click();
+    expect(t.entries()).toEqual([['Latte + Croissant', '2½']]);
+  });
+
   const pieces = (t) => t.$$('.plate-art .piece').map((g) => g.querySelector('use').getAttribute('href'));
 
   it('draws a banana on the plate for each whole one added, and a cut half for each ½', () => {
@@ -314,10 +319,26 @@ describe('Today: the plate', () => {
     expect(t.$$('.piece.drop')).toHaveLength(0);
   });
 
-  it('draws up to 14 bananas and counts the rest', () => {
+  it('doesn’t drop the bananas already on the plate when the app opens', () => {
+    const storage = memoryStorage();
+    mount({ storage }).quick('2').click();
+    const t = mount({ storage });
+    expect(t.$$('.piece')).toHaveLength(2);
+    expect(t.$$('.piece.drop')).toHaveLength(0);
+  });
+
+  it('keeps the same drawing across re-renders, so bananas in flight aren’t cut off', () => {
     const t = mount();
-    for (let i = 0; i < 6; i++) t.quick('3').click();
-    expect(t.$$('.piece')).toHaveLength(14);
-    expect(t.$('.plate-more').textContent).toBe('+4');
+    t.quick('1').click();
+    const art = t.$('.plate-art');
+    t.quick('1').click();
+    expect(t.$('.plate-art')).toBe(art);
+  });
+
+  it('draws up to 40 bananas and counts the rest', () => {
+    const t = mount();
+    for (let i = 0; i < 45; i++) t.quick('1').click();
+    expect(t.$$('.piece')).toHaveLength(40);
+    expect(t.$('.plate-more').textContent).toBe('+5');
   });
 });

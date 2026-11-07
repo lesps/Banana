@@ -26,7 +26,7 @@ describe('export', () => {
   it('names the file by local date', () => expect(backupFilename(new Date(2026, 10, 3, 23).getTime())).toBe('banana-2026-11-03.json'));
 
   it('round-trips through parseBackup', () => {
-    const entries = [e('a', 1), e('b', 2, { deleted: true })];
+    const entries = [e('a', 1), e('b', 2, { deleted: true }), e('c', 3, { meal: { id: 'm1', name: 'Dinner' } })];
     const parsed = parseBackup(JSON.stringify(exportData(entries, settings, now)));
     expect(parsed).toEqual({ ok: true, entries, settings, skipped: 0 });
   });
@@ -38,7 +38,7 @@ describe('parseBackup', () => {
   it('rejects non-JSON, the wrong format and unknown versions', () => {
     expect(parseBackup('{oops')).toMatchObject({ ok: false, error: expect.stringMatching(/JSON/) });
     expect(parseBackup(file({ format: 'other' }))).toMatchObject({ ok: false, error: expect.stringMatching(/Banana backup/) });
-    expect(parseBackup(file({ version: 2 }))).toMatchObject({ ok: false, error: expect.stringMatching(/version/) });
+    expect(parseBackup(file({ version: 3 }))).toMatchObject({ ok: false, error: expect.stringMatching(/version/) });
     expect(parseBackup(file({ entries: 'no' }))).toMatchObject({ ok: false });
   });
 
@@ -64,6 +64,24 @@ describe('parseBackup', () => {
   it('keeps the newest copy of an id repeated in the file', () => {
     const r = parseBackup(file({ entries: [e('a', 1), { ...e('a', 5), halves: 9 }, e('a', 3)] }));
     expect(r.entries).toEqual([{ ...e('a', 5), halves: 9 }]);
+  });
+
+  it('writes version 2 and still reads version 1', () => {
+    expect(VERSION).toBe(2);
+    expect(parseBackup(file({ version: 1 })).ok).toBe(true);
+    expect(parseBackup(file({ version: 2 })).ok).toBe(true);
+  });
+
+  it('keeps the meal an entry belongs to', () => {
+    const r = parseBackup(file({ entries: [{ ...e('a', 1), meal: { id: 'm1', name: '  Dinner ', extra: 1 } }, { ...e('b', 1), meal: { id: 'm1' } }] }));
+    expect(r.entries.map((x) => x.meal)).toEqual([{ id: 'm1', name: 'Dinner' }, { id: 'm1', name: '' }]);
+  });
+
+  it('keeps an entry but drops a malformed meal', () => {
+    const bad = [{ id: '' }, { id: 7 }, { id: 'x'.repeat(101) }, 'm1', { id: 'm1', name: 5 }];
+    const r = parseBackup(file({ entries: bad.map((meal, i) => ({ ...e(`e${i}`, 1), meal })) }));
+    expect(r.skipped).toBe(0);
+    expect(r.entries.map((x) => x.meal)).toEqual([undefined, undefined, undefined, undefined, undefined]);
   });
 
   it('defaults missing settings', () => expect(parseBackup(file({ settings: undefined })).settings).toEqual(DEFAULT_SETTINGS));

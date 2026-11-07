@@ -20,6 +20,7 @@ Amounts are stored as an integer number of **half-bananas** (`halves`). ½ banan
 - `label`: optional, may be `""`, trimmed, max 200 chars.
 - `updatedAt`: set on create and on every edit, delete or restore.
 - `deleted: true`: a deleted entry stays as a marker so that importing an older backup can't bring it back. Markers are excluded from every total, list and suggestion. Undoing a delete clears the flag and bumps `updatedAt`.
+- `meal: { "id": "uuid", "name": "Dinner" }`: present when the entry is one part of a meal (a plate logged with several parts). Each part is an ordinary entry (its `label` is the part's name), so totals, History and merging work per part; the parts of a meal share the `id`. `name` may be `""`. Editing a meal writes the same name and day to every part that stays; where parts disagree anyway (edits on two devices, merged), the meal shows the name of its most recently changed part.
 
 ### Settings
 
@@ -27,7 +28,7 @@ Amounts are stored as an integer number of **half-bananas** (`halves`). ½ banan
 
 ### Storage
 
-`localStorage` through a wrapper that never throws (falls back to memory): `banana:entries:v1` (array), `banana:settings:v1`, `banana:lastExport:v1` (ms), and `banana:plate:v1` (the plate, a device-only draft that isn't in backups), and `banana:seenVersion:v1` (the last app version this device has seen). If a save fails, a toast says so and asks for an export. The app calls `navigator.storage.persist()` at startup. Ten years at eight entries a day is about 1.5 MB, under the ~5 MB localStorage limit.
+`localStorage` through a wrapper that never throws (falls back to memory): `banana:entries:v1` (array), `banana:settings:v1`, `banana:lastExport:v1` (ms), and `banana:plate:v1` (the plate, a device-only draft that isn't in backups: `{ parts: [{ id, label?, amounts }], active }`, where `amounts` are the half-banana amounts tapped into that part; a plate saved before 1.10 as a flat list of amounts is read as one part labelled with its chip names, which logs as it would have), and `banana:seenVersion:v1` (the last app version this device has seen). If a save fails, a toast says so and asks for an export. The app calls `navigator.storage.persist()` at startup. Ten years at eight entries a day is about 1.5 MB, under the ~5 MB localStorage limit.
 
 ## Screens
 
@@ -37,19 +38,28 @@ Bottom tabs: **Today**, **Look up**, **History**, **Settings**. Tapping Today al
 
 - Day navigator `‹ Today ›`. `›` is disabled on today. The view always means "today" unless you step back or open a day from History; it follows the rollover while the app is open.
 - Total for the day, large, plus a row of banana icons: with a target, one icon per target banana (whole, cut in half, or an empty outline, and bananas past the target drawn overripe, deeper yellow with brown spots); without a target, one icon per banana eaten. A line under it says "of 18" / "4½ left" / "1 over". While something is on the plate, the row adds those bananas in a lighter, wobbling style and the line previews the result ("of 20 · 9½ left after this"). After a log, the bananas it filled pop into the row one after another and the number gives a small bump (once, on the render right after logging; not on Undo; off with reduced motion).
-- An optional "What was it?" label field, then quick-add buttons `½ 1 1½ 2 3`, each showing its amount as small bananas under the number. Tapping one **adds it to the plate**; nothing is logged yet.
-- **The plate**, below the buttons (so they don't move under your finger when it appears), shown while it has anything on it: a drawn plate with a banana on it for every whole banana added and a cut half for every ½ (item by item, so ½ + ½ is two halves; up to 14 drawn, then a `+N` badge; the newest ones drop onto the plate with a bounce, once, right after they're added, from the buttons, chips, a swipe or Look up), the sum (`1 + 2 + ½ = 3½`, the last 3 amounts with `…` before them, wrapping if needed), **↶** (remove the last amount), **✕** (clear) and **Log 3½**. Log writes one entry for the total on the day being shown, labelled with the typed label, or else the chip names on the plate joined with " + " ("Latte + Croissant"), or else nothing. It then clears the plate and the label and shows `Logged 3½ · Undo`. Enter in the label field also logs the plate. A plate holds up to 100 bananas (one entry's maximum); past that a toast says "A plate holds up to 100 bananas." The plate survives tab switches and closing the app.
-- Recent chips, in one horizontally scrolling row: up to 8 distinct recent labels with the amount last used ("Latte · 1½"). One tap adds it to the plate. The label field also suggests up to 50 past labels.
-- The day's entries, oldest first: time (only when the entry was logged on its own day, since a back-filled entry's creation time says nothing about when it was eaten), label (or "Food"), amount. Tapping one opens the editor.
-- **Swipe actions** on entries. Swipe left past 48 px and let go: the row stays open on a red **Delete** button; swipe right: a yellow **Again** button, which puts the entry's amount and label back on the plate (nothing is logged). A full swipe (45% of the row, at least 140 px) does the action on release; past that point the button fills the row. Delete shows `Deleted · Undo`. Only one row is open at a time; tapping an open row, or anywhere else, closes it. A mostly vertical drag scrolls as usual. The swipe buttons are hidden from screen readers and the tab order; the editor (Delete) and the recent chips (add again) do the same jobs accessibly.
+- A label field, then quick-add buttons `½ 1 1½ 2 3`, each showing its amount as small bananas under the number. Tapping one **adds it to the plate**; nothing is logged yet. The field says "What was it? (optional)", or "Name this meal (optional)" once the plate has more than one part.
+- **The plate**, below the buttons (so they don't move under your finger when it appears), shown while it has anything on it. It holds **parts**: the quick buttons add to the part being built; **+ Part** starts a new, empty part (or picks the empty one already there) and makes it the one being built; a recent chip, an Again swipe or a Look up portion adds its own part named after it (filling an empty, unnamed part being built rather than starting another). Up to 8 parts ("A meal holds up to 8 parts.") and 100 bananas, one entry's maximum ("A plate holds up to 100 bananas."). Under the drawing:
+  - A chip per part, its name ("Part 2" until it has one) and amount; the part being built is highlighted. Tapping another chip makes it the one being built; tapping the highlighted one opens the **part dialog**: its name, an amount stepper (down to 0, which leaves it empty) and **Remove**. Changing the amount there replaces the part's taps with one amount.
+  - **+ Part**, disabled at 8 parts with none empty.
+  - The sum: a lone part's taps (`1 + 2 + ½ = 3½`) or, with several, each part's total (`2 + 3 + 1 = 6`); the last 3 amounts with `…` before them, wrapping if needed. **↶** takes the last amount off the part being built, and the part itself once it's empty (the previous part becomes the one being built). **✕** clears the plate. **Log 6**.
+  - **Log**, on the day being shown: one filled part writes a plain entry labelled with the typed text, or else the part's name. Several write a meal: an entry per filled part (empty parts are skipped), all with the same time and a `meal` named with the typed text (or nothing). Either way it clears the plate and the field and shows `Logged 6 · Dinner · Undo`; Undo takes the whole meal back off. Enter in the field also logs the plate. The plate survives tab switches and closing the app.
+- **The plate drawing**: a round plate seen at an angle, split from the back, clockwise, into a wedge per part sized by its share of the bananas (at least about 34°, so a ½ or an empty part is still big enough to tap; a lone part has the whole plate and no lines or labels). The part being built is shaded yellow, names sit on the rim, and tapping a wedge or its bananas makes that part the one being built. Each tap puts a banana per whole banana and a cut half per ½ in its part's wedge (½ + ½ is two halves), up to 40 drawn, taking from every part in turn, then a `+N` badge. Bananas heap: each one takes the spot in its wedge where the pile is lowest, weighed against the distance from the middle of the wedge, so piles grow up before they spread, and they shrink a step as the plate fills. Bananas that were just added drop from above with gravity, bounce and settle, one after another, and the ones they land on give a little; when the wedges change, the bananas slide to their new spots, and any left hanging (a part taken off from under them) fall. With reduced motion everything just appears in place. The drawing is hidden from screen readers; the chips do the same jobs.
+- Recent chips, in one horizontally scrolling row: up to 8 distinct recent labels with the amount last used ("Latte · 1½"); a meal's parts count. One tap adds it to the plate as a part. The label field also suggests up to 50 past labels.
+- The day's entries, oldest first: time (only when the entry was logged on its own day, since a back-filled entry's creation time says nothing about when it was eaten), label (or "Food"), amount. Tapping one opens the editor. A **meal** is one row: its time, name (or "Meal") with its parts underneath ("Rice 2 · Chicken 3 · Salad 1", an unnamed part as "Food"), and its total; tapping it opens the meal editor.
+- **Swipe actions** on entries and meals. Swipe left past 48 px and let go: the row stays open on a red **Delete** button; swipe right: a yellow **Again** button, which puts the entry's amount and label back on the plate as a part, or for a meal every part, and the meal's name in the label field if it's empty (nothing is logged; if they don't all fit, nothing is added and a toast says why). A full swipe (45% of the row, at least 140 px) does the action on release; past that point the button fills the row. Delete shows `Deleted · Undo` (a meal's Undo brings back every part). Only one row is open at a time; tapping an open row, or anywhere else, closes it. A mostly vertical drag scrolls as usual. The swipe buttons are hidden from screen readers and the tab order; the editors (Delete) and the recent chips (add again) do the same jobs accessibly.
 
 ### Editor (dialog)
 
 Amount stepper (− / value / +, ½ steps, min ½), label, day (date input, no future dates), **Save**, **Delete**, **Cancel**. Delete closes the dialog and shows `Deleted · Undo`.
 
+### Meal editor (dialog)
+
+"Edit meal" (focus starts on the heading, so the keyboard doesn't pop up): the meal's name, each part as a name field, a compact amount stepper (min ½) and **✕** (takes the part out; disabled on the last one), the day (no future dates), **Delete meal**, **Cancel**, **Save**. Nothing changes until Save, which deletes the parts taken out and writes every other part's name, amount, the meal's name and the day. Delete meal deletes every part and shows `Deleted · Undo`.
+
 ### Look up
 
-A reference for estimating. Nothing here creates or changes an entry. Tapping a portion adds its bananas to the plate, prefills "What was it?" with the food and portion ("Bagel (regular)"; appended after " + " when the field already has text, capped at 200 characters), and goes back to the day being shown, where you can adjust the plate and the label before logging. If the plate is full, a toast says so and the label is left alone.
+A reference for estimating. Nothing here creates or changes an entry. Tapping a portion adds its bananas to the plate as a part named after the food and portion ("Bagel (regular)", capped at 200 characters) and goes back to the day being shown, where you can adjust it before logging; a lone part logs under that name. If the plate is full, a toast says so.
 
 - A search box. The search survives switching tabs (not reloads).
 - Before typing: a hint ("Search a food to see about how many bananas it is. Tap a portion to put it on your plate.") and example searches (bagel, burrito, latte, pizza, beer, salad) that fill the box.
@@ -64,7 +74,7 @@ Search: every query word must match the start of a word in the name (any order; 
 
 - Bars for the last 14 days ending today, scaled to the larger of the target and the biggest day, with a dashed target line when a target is set and days over it drawn overripe (spotted). Bars with anything in them carry a little stem. Tapping a bar opens that day.
 - "Average X a day over N logged days" for the 7 days before today (days with no entries are left out, since an empty day usually means nothing was logged, not nothing eaten).
-- Every day that has entries, newest first: date, total, number of entries. 30 at a time with "Show more". Tapping one opens it in the day view.
+- Every day that has entries, newest first: date, total, number of entries (a meal counts once). 30 at a time with "Show more". Tapping one opens it in the day view.
 
 ### Settings
 
@@ -91,10 +101,10 @@ The text comes from `CHANGELOG.md`, bundled at build time: each `## x.y.z — da
 ## Backup format
 
 ```json
-{ "format": "banana-log", "version": 1, "exported": "2026-11-03T13:00:00.000Z", "settings": { … }, "entries": [ … ] }
+{ "format": "banana-log", "version": 2, "exported": "2026-11-03T13:00:00.000Z", "settings": { … }, "entries": [ … ] }
 ```
 
-File name `banana-YYYY-MM-DD.json`. Exports include deleted markers.
+File name `banana-YYYY-MM-DD.json`. Exports include deleted markers. Version 2 added entries' optional `meal`; version 1 files still import (versions before 1.10 of the app can't read version 2). A malformed `meal` is dropped and the entry kept.
 
 **Merge** (import into existing data): per `id`, keep whichever copy has the newer `updatedAt`; ties keep the local copy. Re-importing the same file changes nothing. Settings merge the same way on their own `updatedAt`, so restoring onto a fresh install takes the file's settings. Invalid entries are skipped and counted; a file with the wrong `format` or an unknown `version` is rejected.
 
@@ -110,7 +120,7 @@ SR Legacy, Foundation and Branded foods were evaluated and left out: SR Legacy i
 
 **Launch screen (iPhone):** while a Home Screen web app starts, iOS shows plain white unless there's a launch image for that exact screen. Banana has one for every iPhone screen size, portrait, light and dark (dark when the phone is in dark mode): the smiling banana with a soft shadow on the app's background. iOS reads them only when the app is added to the Home Screen, so an install from before 1.9.0 has to be removed and added again to get one. They aren't part of the offline download.
 
-Cream and banana yellow, light and dark themes, a faint pattern of scattered banana silhouettes behind the page. Bananas are drawn from one inline SVG sprite: shaded peel, a ridge, a highlight, a green-tinged neck, a stem and a dark tip. A whole banana; a half is the stem half cut open (pale flesh showing) over an empty outline; an empty banana is the outline alone. Past the target they go overripe: deeper yellow with brown spots. The quick buttons use one-colour versions; the empty states show a big banana with a smiling face that sways gently.
+Cream and banana yellow, light and dark themes, a faint pattern of scattered banana silhouettes behind the page. The plate is drawn tilted, cream with a darker edge and a soft shadow, in both themes. Bananas are drawn from one inline SVG sprite: shaded peel, a ridge, a highlight, a green-tinged neck, a stem and a dark tip. A whole banana; a half is the stem half cut open (pale flesh showing) over an empty outline; an empty banana is the outline alone. Past the target they go overripe: deeper yellow with brown spots. The quick buttons use one-colour versions; the empty states show a big banana with a smiling face that sways gently.
 
 ## Stack
 
